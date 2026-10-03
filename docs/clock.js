@@ -45,6 +45,12 @@
   const MOVES = {};
   for (const k in RAW) MOVES[k] = { front: RAW[k].slice(0, 14), back: RAW[k].slice(14) };
 
+  // How the pages show the two diagonal pin states: BS (backslash, UL+DR up) and FS (forward slash, UR+DL up).
+  const PIN_LABELS = { BS: "\\", FS: "/" };
+  const LABEL_PINS = { "\\": "BS", "/": "FS" };
+  function pinLabel(p) { return PIN_LABELS[p] || p; }
+  function pinFromLabel(s) { return LABEL_PINS[s] || s; }
+
   // Which pins are up (1) for each pin state, order UL UR DL DR (as seen from the front).
   const PINS_UP = {
     UR: [0, 1, 0, 0], DR: [0, 0, 0, 1], DL: [0, 0, 1, 0], UL: [1, 0, 0, 0],
@@ -257,7 +263,7 @@
   }
 
   return {
-    CLOCKS, PIN_STATES, MOVES, PINS_UP, Q,
+    CLOCKS, PIN_STATES, MOVES, PINS_UP, PIN_LABELS, pinLabel, pinFromLabel, Q,
     moveMatrix, invertExact, analyse, intuitiveMoves, validateOrder, solve, applyMoves,
     parseScramble, randomScramble, formatTurn, normTurn, formatFormula,
   };

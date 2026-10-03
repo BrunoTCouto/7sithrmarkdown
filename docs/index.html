@@ -233,7 +233,7 @@
   const selects = [];
   for (let i = 0; i < 7; i++) {
     const sel = document.createElement("select"); sel.setAttribute("aria-label", "Pin state " + (i + 1));
-    for (const p of Clock.PIN_STATES) { const o = document.createElement("option"); o.value = p; o.textContent = p; sel.appendChild(o); }
+    for (const p of Clock.PIN_STATES) { const o = document.createElement("option"); o.value = p; o.textContent = Clock.pinLabel(p); sel.appendChild(o); }
     sel.addEventListener("change", () => { saveOrder(); update(); });
     $("pins").appendChild(sel); selects.push(sel);
   }
@@ -272,12 +272,12 @@
     const parts = [];
     for (const st of sol.steps) {
       const row = document.createElement("div"); row.className = "step";
-      const name = document.createElement("div"); name.className = "name"; name.textContent = st.pin;
+      const name = document.createElement("div"); name.className = "name"; name.textContent = Clock.pinLabel(st.pin);
       row.append(pinDiagram(st.pinsUp), name,
         turnBlock("Front wheel", st.front, st.frontFormula, st.frontIntuitive, "front"),
         turnBlock("Back wheel", st.back, st.backFormula, st.backIntuitive, "back"));
       steps.appendChild(row);
-      parts.push(st.pin + " " + Clock.formatTurn(st.front) + "/" + Clock.formatTurn(st.back));
+      parts.push(Clock.pinLabel(st.pin) + " " + Clock.formatTurn(st.front) + "/" + Clock.formatTurn(st.back));
     }
     $("summary").textContent = parts.join("   ");
     const a = Clock.analyse(order);
@@ -305,7 +305,7 @@
   const params = new URLSearchParams(location.search);
   let initial = "dl R DR BS UL L ur";
   try { initial = localStorage.getItem("clock7.order") || initial; } catch (e) {}
-  const urlOrder = (params.get("order") || "").trim().split(/\s+/).filter(Boolean);
+  const urlOrder = (params.get("order") || "").trim().split(/\s+/).filter(Boolean).map(Clock.pinFromLabel);
   if (urlOrder.length === 7 && urlOrder.every((p) => Clock.PIN_STATES.includes(p))) initial = urlOrder.join(" ");
   setOrder(initial.split(" "));
   const q = params.get("scramble");

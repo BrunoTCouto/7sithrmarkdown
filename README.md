@@ -37,7 +37,9 @@ Regenerating takes a few seconds; the output is deterministic, so a rerun should
 
 Conventions match the notebook: both the front wheel (a pin that is up) and the back wheel
 (a pin that is down) are turned as seen from the front, `+` is clockwise; back faces are
-read with the puzzle flipped over.
+read with the puzzle flipped over. The pages show the two diagonal pin states as `\` (the
+notebook's `BS`, UL and DR up) and `/` (`FS`, UR and DL up); the code and the CSV files keep
+the `BS`/`FS` names, and `?order=` accepts either spelling.
 
 ## Files
 

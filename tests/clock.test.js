@@ -93,3 +93,12 @@ test("validateOrder catches bad input and warns about determinant ±3 sets", () 
   for (let h = 0; h < 12; h++) { const s = new Array(14).fill(0); s[4] = h; if (!Clock.solve(found, s).ok) failures++; }
   assert.ok(failures > 0, "expected some unsolvable states for a determinant-3 set");
 });
+
+test("the pages show BS as a backslash and FS as a slash", () => {
+  assert.equal(Clock.pinLabel("BS"), "\\");
+  assert.equal(Clock.pinLabel("FS"), "/");
+  assert.equal(Clock.pinLabel("dl"), "dl");
+  assert.equal(Clock.pinFromLabel("\\"), "BS");
+  assert.equal(Clock.pinFromLabel("/"), "FS");
+  assert.deepEqual("dl R DR \\ UL L ur".split(" ").map(Clock.pinFromLabel), ORDERS.tommy);
+});
