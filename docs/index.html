@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Clock 7-Simul Solver</title>
-<meta name="description" content="Solve any Rubik's Clock scramble with a 7-simul pin order. Paste a WCA scramble or type the clock faces, pick your pin order, get the 14 wheel turns.">
+<title>7sith | 7-Simul Wizard</title>
+<meta name="description" content="Search and simulate all 1,370,880 Rubik's Clock 7-simul pin orders.">
 <style>
   :root {
     --bg: #f6f5f1; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #dcdad3;
@@ -100,15 +100,15 @@
 </head>
 <body>
 <main>
-  <nav><strong>Solver</strong> · <a href="orders.html">Pin order finder</a><span class="spacer"></span><span class="msg" id="shareMsg"></span><button id="share" title="Copy a link to this scramble, these faces and this pin order">Share link</button></nav>
-  <h1>Clock 7-Simul Solver</h1>
+  <nav><strong>Solver</strong> · <a href="orders.html">Pin Order Finder</a><span class="spacer"></span><span class="msg" id="shareMsg"></span><button id="share" title="Copy a link to this scramble, these faces and this pin order">Share link</button></nav>
+  <h1>7sith | 7-Simul Wizard</h1>
   <p class="lede">Paste a scramble or type the clock faces, pick your seven pin states, and get the fourteen wheel turns that solve it.</p>
 
   <div class="grid two">
     <section class="card">
       <h2>1. Scramble</h2>
       <label for="scramble">WCA notation, e.g. <code>UR2+ DR3- … y2 U5+ …</code></label>
-      <textarea id="scramble" spellcheck="false" placeholder="UR2+ DR2+ DL2+ UL4+ U3+ R0+ D4+ L1+ ALL3- y2 U5+ R5- D4+ L2+ ALL5-"></textarea>
+      <textarea id="scramble" spellcheck="false" placeholder="UR3- DR4- DL3+ UL6+ U1+ R1- D5+ L2- ALL6+ y2 U3- R1- D1- L3- ALL5-"></textarea>
       <div class="row">
         <button class="primary" id="apply">Apply scramble</button>
         <button id="random">Random scramble</button>
@@ -156,11 +156,11 @@
       <p><strong>Pins</strong>: filled dot = pin up, seen from the front (UL UR / DL DR).</p>
       <p><strong>Front wheel</strong>: turn any wheel whose pin is <em>up</em>. <strong>Back wheel</strong>: turn any wheel whose pin is <em>down</em>. Do both without changing pins.</p>
       <p>All turns are hours as seen from the front: <code>3+</code> is three hours clockwise, <code>2-</code> two hours anticlockwise.</p>
-      <p>The small formula under each turn is what you would memorise to compute it from the scrambled faces (sum the listed clocks, then reduce to −5…6). Turns tagged <em>intuitive</em> can be done by eye: just line the clocks up.</p>
+      <p>The small formula under each turn is what you would memorize to compute it from the scrambled faces (sum the listed clocks, then reduce to −5…6). Turns tagged <em>intuitive</em> can be done by eye: just line the clocks up.</p>
     </details>
   </section>
 
-  <footer>Linear-algebra method from <a href="https://github.com/chrnan6710/7sithrmarkdown">ClockClean.Rmd</a>. Everything runs in your browser; nothing is sent anywhere.</footer>
+  <footer>By Chris Nankervis and Bruno Couto. Runs entirely locally.</footer>
 </main>
 
 <script src="clock.js"></script>
@@ -308,7 +308,7 @@
     $("summary").textContent = parts.join("   ");
     const a = Clock.analyse(order);
     const memo = a.memoLength.filter((n) => n > 0);
-    $("stats").textContent = "Method: " + (14 - a.intuitive.size) + " memorised turns, " + a.intuitive.size + " intuitive; "
+    $("stats").textContent = "Method: " + (14 - a.intuitive.size) + " memorized turns, " + a.intuitive.size + " intuitive; "
       + "memo formulas total " + memo.reduce((x, y) => x + y, 0) + " clocks (longest " + (memo.length ? Math.max(...memo) : 0) + ").";
     if (sol.fractional) { setMsg("checkMsg", sol.reason, "bad"); return; }
     const after = Clock.applyMoves(order, sol.raw, state);

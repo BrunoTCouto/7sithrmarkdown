@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Clock Pin Order Finder</title>
-<meta name="description" content="Search all 1,370,880 Rubik's Clock 7-simul pin orders by memo length, intuitive turns, pin changes and which pin states they use.">
+<title>7sith | 7-Simul Wizard</title>
+<meta name="description" content="Search and simulate all 1,370,880 Rubik's Clock 7-simul pin orders.">
 <style>
   :root {
     --bg: #f6f5f1; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #dcdad3;
@@ -93,7 +93,7 @@
 <main>
   <nav><a href="index.html">Solver</a> · <strong>Pin order finder</strong><span class="spacer"></span><span class="msg" id="shareMsg"></span><button class="small" id="share" title="Copy a link to these filters and this sort">Share link</button></nav>
   <h1>Clock Pin Order Finder</h1>
-  <p class="lede">All 1,370,880 orderings of the 272 working 7-simul pin sets, scored as in the notebook. Narrow them down, sort, and open any order in the solver.</p>
+  <p class="lede">All 1,370,880 orderings of the 272 working 7-simul pin sets. Narrow them down, sort, and open any order in the solver.</p>
 
   <section class="card" id="loading">
     <h2>Loading the database</h2>
@@ -105,7 +105,7 @@
     <h2>Filters</h2>
     <div class="filters">
       <div>
-        <label>Pin states</label>
+        <label>Required/Excluded pin states</label>
         <div class="chips" id="chips"></div>
         <div class="hint">Click once to require a pin state, twice to exclude it, again to clear.</div>
         <div class="pos">
@@ -116,30 +116,30 @@
       </div>
       <div>
         <div class="nums">
-          <div><label for="maxMemorized">Memorised turns ≤</label><input type="number" id="maxMemorized" min="0" max="14" placeholder="any"></div>
-          <div><label for="maxMax">Longest memo ≤</label><input type="number" id="maxMax" min="0" max="14" placeholder="any"></div>
-          <div><label for="maxSum">Total memo ≤</label><input type="number" id="maxSum" min="0" max="200" placeholder="any"></div>
-          <div><label for="maxMean">Mean memo ≤</label><input type="number" id="maxMean" min="0" max="14" step="0.1" placeholder="any"></div>
-          <div><label for="maxD">D-wheel pin states ≤</label><input type="number" id="maxD" min="0" max="7" placeholder="any"></div>
+          <div><label for="maxMemorized">Memorized turns ≤</label><input type="number" id="maxMemorized" min="0" max="14" placeholder="any"></div>
+          <div><label for="maxMax">Longest single memo ≤</label><input type="number" id="maxMax" min="0" max="14" placeholder="any"></div>
+          <div><label for="maxSum">Total memo length ≤</label><input type="number" id="maxSum" min="0" max="200" placeholder="any"></div>
+          <div><label for="maxMean">Mean memo length ≤</label><input type="number" id="maxMean" min="0" max="14" step="0.1" placeholder="any"></div>
+          <div><label for="maxD">D-moves ≤</label><input type="number" id="maxD" min="0" max="7" placeholder="any"></div>
           <div><label for="maxPinMax">Pins changed per step ≤</label><input type="number" id="maxPinMax" min="0" max="4" placeholder="any"></div>
           <div><label for="maxPinSum">Total pin changes ≤</label><input type="number" id="maxPinSum" min="0" max="24" placeholder="any"></div>
         </div>
         <div class="sortrow">
           <div><label for="sortBy">Sort by</label><select id="sortBy">
-            <option value="sum">Total memo</option>
-            <option value="memorized">Memorised turns</option>
-            <option value="mean">Mean memo</option>
-            <option value="max">Longest memo</option>
+            <option value="sum">Total memo length</option>
+            <option value="memorized">Memorized turns</option>
+            <option value="mean">Mean memo length</option>
+            <option value="max">Longest single memo</option>
             <option value="min">Shortest memo</option>
-            <option value="d">D-wheel pin states</option>
+            <option value="d">D-moves</option>
             <option value="pinSum">Total pin changes</option>
             <option value="pinMax">Pins changed per step</option>
           </select></div>
           <button id="dir" class="small" title="Toggle sort direction">ascending ↑</button>
         </div>
-        <div class="row">
-          <button class="small" id="reset">Clear filters</button>
-        </div>
+      <div class="row">
+        <button class="small" id="reset">Clear filters</button>
+      </div>
       </div>
     </div>
   </section>
@@ -150,7 +150,7 @@
       <table>
         <thead><tr>
           <th>#</th><th>Order</th>
-          <th class="num" title="Turns you have to compute rather than line up by eye">Memorised</th>
+          <th class="num" title="Turns you have to compute rather than line up by eye">Memorized</th>
           <th class="num" title="Clocks to add up: shortest / mean / longest formula">Memo min / mean / max</th>
           <th class="num" title="Sum of all memo formula lengths">Memo total</th>
           <th class="num" title="Pin states among U, D, DL, DR, dl, dr">D-wheel</th>
@@ -163,15 +163,15 @@
     <div class="row"><button id="more" hidden>Show 100 more</button></div>
     <details>
       <summary>What the columns mean</summary>
-      <p><strong>Memorised</strong>: of the 14 wheel turns, how many need a memo formula; the rest are intuitive (line two clocks up by eye).</p>
-      <p><strong>Memo</strong>: a formula's length is the number of clocks you add up to get that turn. Shorter is easier to memorise.</p>
+      <p><strong>Memorized</strong>: of the 14 wheel turns, how many need a memo formula; the rest are intuitive (line two clocks up by eye).</p>
+      <p><strong>Memo</strong>: a formula's length is the number of clocks you add up to get that turn. Shorter is easier to memorize.</p>
       <p><strong>D-wheel</strong>: pin states whose front move is on a D wheel (U, D, DL, DR, dl, dr), which some people find awkward.</p>
       <p><strong>Pin changes</strong>: how many pins you flip between consecutive pin states. Fewer means faster hands.</p>
       <p>The numbers are generated by <code>scripts/build-orders.js</code>, a port of the statistics loop in <code>ClockClean.Rmd</code>, and stored as plain CSV in <code>docs/data/orders/</code> (one file per pin set).</p>
     </details>
   </section>
 
-  <footer>Linear-algebra method from <a href="https://github.com/chrnan6710/7sithrmarkdown">ClockClean.Rmd</a>. Everything runs in your browser; nothing is sent anywhere.</footer>
+  <footer>By Chris Nankervis and Bruno Couto. Runs entirely locally.</footer>
 </main>
 
 <script src="clock.js"></script>
@@ -282,7 +282,7 @@
   }
 
   // The filters live in the URL so a search can be bookmarked or shared.
-  const NUM_PARAMS = { maxMemorized: "memorised", maxMax: "maxmemo", maxSum: "memo", maxMean: "mean", maxD: "d", maxPinMax: "pinstep", maxPinSum: "pins" };
+  const NUM_PARAMS = { maxMemorized: "memorized", maxMax: "maxmemo", maxSum: "memo", maxMean: "mean", maxD: "d", maxPinMax: "pinstep", maxPinSum: "pins" };
   function syncUrl() {
     const p = new URLSearchParams();
     const req = PINS.filter((_, i) => chipState[i] === 1), exc = PINS.filter((_, i) => chipState[i] === 2);
@@ -307,7 +307,7 @@
     for (const id in NUM_PARAMS) { const v = p.get(NUM_PARAMS[id]); if (v !== null && v !== "" && !isNaN(Number(v))) $(id).value = v; }
     const sort = p.get("sort");
     if (sort && [...$("sortBy").options].some((o) => o.value === sort)) $("sortBy").value = sort;
-    dirAsc = p.get("dir") !== "desc"; $("dir").textContent = dirAsc ? "ascending ↑" : "descending ↓";
+    dirAsc = p.get("dir") !== "desc"; $("dir").textContent = dirAsc ? "Ascending ↑" : "Descending ↓";
   }
   function setMsg(id, text, cls) { const el = $(id); el.textContent = text; el.className = "msg" + (cls ? " " + cls : ""); }
   function share() {
@@ -414,7 +414,7 @@
   const debounced = () => { clearTimeout(timer); timer = setTimeout(run, 150); };
   for (const id of ["maxMemorized", "maxMax", "maxSum", "maxMean", "maxD", "maxPinMax", "maxPinSum"]) $(id).addEventListener("input", debounced);
   for (const id of ["first", "last", "hideThirds", "sortBy"]) $(id).addEventListener("change", run);
-  $("dir").addEventListener("click", () => { dirAsc = !dirAsc; $("dir").textContent = dirAsc ? "ascending ↑" : "descending ↓"; run(); });
+  $("dir").addEventListener("click", () => { dirAsc = !dirAsc; $("dir").textContent = dirAsc ? "Ascending ↑" : "Descending ↓"; run(); });
   $("more").addEventListener("click", showMore);
   $("share").addEventListener("click", share);
   $("reset").addEventListener("click", () => {
