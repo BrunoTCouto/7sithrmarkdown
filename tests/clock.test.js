@@ -1,0 +1,95 @@
+// Run with: node --test tests/
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const Clock = require("../docs/clock.js");
+
+const TEST_SCRAMBLE = "UR2+ DR2+ DL2+ UL4+ U3+ R0+ D4+ L1+ ALL3- y2 U5+ R5- D4+ L2+ ALL5-";
+const TEST_STATE = [10, 7, 0, 11, 3, 8, 10, 6, 2, 9, 6, 1, 11, 8]; // testclockstate in ClockClean.Rmd
+const CONNOR_SCRAMBLE = "UR3- DR6+ DL5- UL3- U1- R0+ D4+ L0+ ALL2- y2 U1- R3- D5+ L6+ ALL3-";
+const CONNOR_STATE = [1, 3, 4, 5, 8, 4, 10, 3, 0, 11, 7, 4, 10, 5]; // connorClockState in ClockClean.Rmd
+
+const ORDERS = {
+  tommy: "dl R DR BS UL L ur".split(" "),
+  bpaul: "dl R DR ur L UL BS".split(" "),
+  connor: "ul R UR dr L DL FS".split(" "),
+};
+
+test("scramble parser reproduces the states recorded in the notebook", () => {
+  assert.deepEqual(Clock.parseScramble(TEST_SCRAMBLE), TEST_STATE);
+  assert.deepEqual(Clock.parseScramble(CONNOR_SCRAMBLE), CONNOR_STATE);
+});
+
+test("scramble parser rejects garbage", () => {
+  assert.throws(() => Clock.parseScramble("UR2+ XX3-"));
+  assert.throws(() => Clock.parseScramble(""));
+});
+
+test("exactly 272 of the 3432 seven-pin sets have full rank, 268 of them with determinant ±1", () => {
+  function* combos(arr, k, start = 0, acc = []) {
+    if (acc.length === k) { yield acc.slice(); return; }
+    for (let i = start; i < arr.length; i++) { acc.push(arr[i]); yield* combos(arr, k, i + 1, acc); acc.pop(); }
+  }
+  let valid = 0, unit = 0;
+  for (const set of combos(Clock.PIN_STATES, 7)) {
+    const { ok, det } = Clock.invertExact(Clock.moveMatrix(set));
+    if (!ok) continue;
+    valid++;
+    if (det.n === 1n || det.n === -1n) unit++;
+  }
+  assert.equal(valid, 272);
+  assert.equal(unit, 268);
+});
+
+test("solutions actually solve the puzzle for the notebook's pin orders", () => {
+  for (const [name, order] of Object.entries(ORDERS)) {
+    for (const state of [TEST_STATE, CONNOR_STATE]) {
+      const sol = Clock.solve(order, state);
+      assert.ok(sol.ok, name + ": " + sol.reason);
+      const after = Clock.applyMoves(order, sol.raw, state);
+      assert.deepEqual(after, new Array(14).fill(0), name + " left the clock unsolved");
+      for (const v of sol.raw) assert.ok(v >= -5 && v <= 6);
+    }
+  }
+});
+
+test("solutions solve random scrambles", () => {
+  let seed = 42;
+  const rng = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
+  for (let i = 0; i < 50; i++) {
+    const state = Clock.parseScramble(Clock.randomScramble(rng));
+    for (const order of Object.values(ORDERS)) {
+      const sol = Clock.solve(order, state);
+      assert.ok(sol.ok);
+      assert.deepEqual(Clock.applyMoves(order, sol.raw, state), new Array(14).fill(0));
+    }
+  }
+});
+
+test("the last pin state is always intuitive and formulas look sane", () => {
+  const a = Clock.analyse(ORDERS.tommy);
+  assert.ok(a.intuitive.has(12) && a.intuitive.has(13));
+  assert.equal(a.formulas.length, 14);
+  for (const f of a.formulas) assert.match(f, /^-?(\d+(\/\d+)? )?[A-Z][A-Za-z]?b?( [+-] (\d+(\/\d+)? )?[A-Z][A-Za-z]?b?)*$|^0$/);
+});
+
+test("validateOrder catches bad input and warns about determinant ±3 sets", () => {
+  assert.ok(Clock.validateOrder(["UR", "UR", "DL", "UL", "U", "L", "D"]).errors.length > 0);
+  assert.ok(Clock.validateOrder(["UR", "DR", "DL"]).errors.length > 0);
+  assert.ok(Clock.validateOrder(["UR", "DR", "DL", "UL", "U", "L", "D"]).errors.length > 0); // singular
+  assert.deepEqual(Clock.validateOrder(ORDERS.tommy), { errors: [], warnings: [] });
+  // find a det ±3 set and check that some scramble is unsolvable with it
+  function* combos(arr, k, start = 0, acc = []) {
+    if (acc.length === k) { yield acc.slice(); return; }
+    for (let i = start; i < arr.length; i++) { acc.push(arr[i]); yield* combos(arr, k, i + 1, acc); acc.pop(); }
+  }
+  let found = null;
+  for (const set of combos(Clock.PIN_STATES, 7)) {
+    const { ok, det } = Clock.invertExact(Clock.moveMatrix(set));
+    if (ok && (det.n === 3n || det.n === -3n)) { found = set; break; }
+  }
+  assert.ok(found);
+  assert.equal(Clock.validateOrder(found).warnings.length, 1);
+  let failures = 0;
+  for (let h = 0; h < 12; h++) { const s = new Array(14).fill(0); s[4] = h; if (!Clock.solve(found, s).ok) failures++; }
+  assert.ok(failures > 0, "expected some unsolvable states for a determinant-3 set");
+});
