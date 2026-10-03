@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clock 7-Simul Solver</title>
+<meta name="description" content="Solve any Rubik's Clock scramble with a 7-simul pin order. Paste a WCA scramble or type the clock faces, pick your pin order, get the 14 wheel turns.">
+<style>
+  :root {
+    --bg: #f6f5f1; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #dcdad3;
+    --accent: #1f5f8b; --accent-ink: #ffffff; --ok: #2e7d4f; --warn: #a2620b; --bad: #b3261e;
+    --pin-up: #1d1d1b; --pin-down: #d7d5cd; --chip: #eef1f4; --intuitive: #e8f3ec; --intuitive-ink: #2e7d4f;
+    --radius: 12px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #343537;
+      --accent: #6fb1e0; --accent-ink: #0f1a22; --ok: #6cc38f; --warn: #e0a24a; --bad: #ef7a73;
+      --pin-up: #ecebe6; --pin-down: #3b3c3e; --chip: #2a2c2e; --intuitive: #1d3327; --intuitive-ink: #8fd4ab;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #343537;
+    --accent: #6fb1e0; --accent-ink: #0f1a22; --ok: #6cc38f; --warn: #e0a24a; --bad: #ef7a73;
+    --pin-up: #ecebe6; --pin-down: #3b3c3e; --chip: #2a2c2e; --intuitive: #1d3327; --intuitive-ink: #8fd4ab;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.05rem; margin: 0 0 12px; }
+  .lede { color: var(--muted); margin: 0 0 20px; }
+  .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .grid.two { grid-template-columns: 1fr 1fr; } }
+  section.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+  label { font-size: 0.85rem; color: var(--muted); }
+  textarea, input[type=number], select {
+    font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+  }
+  textarea { width: 100%; min-height: 64px; resize: vertical; font-family: var(--mono); font-size: 0.95rem; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+  button { font: inherit; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); padding: 8px 14px; cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button:hover { filter: brightness(0.96); }
+  .msg { font-size: 0.9rem; margin-top: 8px; min-height: 1.2em; }
+  .msg.bad { color: var(--bad); } .msg.warn { color: var(--warn); } .msg.ok { color: var(--ok); }
+
+  .faces { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .face { text-align: center; }
+  .face .title { font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
+  .clockgrid { display: grid; grid-template-columns: repeat(3, 56px); gap: 6px; }
+  .clockgrid .cell { position: relative; }
+  .clockgrid input { width: 56px; height: 56px; text-align: center; font-size: 1.15rem; padding: 0; -moz-appearance: textfield; }
+  .clockgrid input::-webkit-outer-spin-button, .clockgrid input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .clockgrid .cell::after { content: attr(data-name); position: absolute; left: 4px; top: 2px; font-size: 0.6rem; color: var(--muted); pointer-events: none; }
+  .clockgrid .blank { width: 56px; height: 56px; }
+
+  .pins { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  .pins select { width: 100%; padding: 8px 4px; text-align: center; }
+  @media (max-width: 560px) { .pins { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .presets button { padding: 6px 10px; font-size: 0.9rem; }
+
+  .steps { display: grid; gap: 10px; }
+  .step { display: grid; grid-template-columns: 44px 56px 1fr 1fr; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+  @media (max-width: 560px) { .step { grid-template-columns: 44px 48px 1fr; } .step .back { grid-column: 3; } }
+  .pindiag { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 36px; }
+  .pindiag span { width: 14px; height: 14px; border-radius: 50%; background: var(--pin-down); display: block; }
+  .pindiag span.up { background: var(--pin-up); }
+  .step .name { font-weight: 600; font-size: 1.1rem; }
+  .step .num { font-weight: 600; font-family: var(--mono); font-size: 1.2rem; }
+  .step .num.zero { color: var(--muted); font-weight: 400; }
+  .turn .what { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .turn .formula { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); word-break: break-word; }
+  .tag { display: inline-block; font-size: 0.7rem; padding: 1px 6px; border-radius: 999px; background: var(--intuitive); color: var(--intuitive-ink); margin-left: 4px; vertical-align: middle; }
+  .summary { font-family: var(--mono); background: var(--chip); border-radius: 8px; padding: 10px 12px; margin-top: 12px; word-break: break-word; }
+  .stats { color: var(--muted); font-size: 0.85rem; margin-top: 8px; }
+  details { margin-top: 16px; }
+  details summary { cursor: pointer; color: var(--muted); }
+  details p { margin: 6px 0; font-size: 0.9rem; }
+  footer { color: var(--muted); font-size: 0.8rem; margin-top: 32px; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Clock 7-Simul Solver</h1>
+  <p class="lede">Paste a scramble or type the clock faces, pick your seven pin states, and get the fourteen wheel turns that solve it.</p>
+
+  <div class="grid two">
+    <section class="card">
+      <h2>1. Scramble</h2>
+      <label for="scramble">WCA notation, e.g. <code>UR2+ DR3- … y2 U5+ …</code></label>
+      <textarea id="scramble" spellcheck="false" placeholder="UR2+ DR2+ DL2+ UL4+ U3+ R0+ D4+ L1+ ALL3- y2 U5+ R5- D4+ L2+ ALL5-"></textarea>
+      <div class="row">
+        <button class="primary" id="apply">Apply scramble</button>
+        <button id="random">Random scramble</button>
+        <button id="reset">Reset to solved</button>
+      </div>
+      <div class="msg" id="scrambleMsg"></div>
+    </section>
+
+    <section class="card">
+      <h2>2. Clock faces</h2>
+      <div class="faces">
+        <div class="face">
+          <div class="title">Front (as you look at it)</div>
+          <div class="clockgrid" id="front"></div>
+        </div>
+        <div class="face">
+          <div class="title">Back (flip the puzzle over, y2)</div>
+          <div class="clockgrid" id="back"></div>
+        </div>
+      </div>
+      <div class="msg" id="stateMsg">Hours 0–11; 12 o'clock is 0. Edit the faces directly if you prefer.</div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:16px">
+    <h2>3. Pin order</h2>
+    <div class="pins" id="pins"></div>
+    <div class="row presets">
+      <span style="color:var(--muted);font-size:0.9rem">Presets:</span>
+      <button data-order="dl R DR BS UL L ur">Tommy</button>
+      <button data-order="dl R DR ur L UL BS">Bpaul</button>
+      <button data-order="ul R UR dr L DL FS">Connor</button>
+    </div>
+    <div class="msg" id="orderMsg"></div>
+  </section>
+
+  <section class="card" style="margin-top:16px">
+    <h2>4. Solution</h2>
+    <div class="steps" id="steps"></div>
+    <div class="summary" id="summary"></div>
+    <div class="stats" id="stats"></div>
+    <div class="msg" id="checkMsg"></div>
+    <details>
+      <summary>How to read this</summary>
+      <p><strong>Pins</strong>: filled dot = pin up, seen from the front (UL UR / DL DR).</p>
+      <p><strong>Front wheel</strong>: turn any wheel whose pin is <em>up</em>. <strong>Back wheel</strong>: turn any wheel whose pin is <em>down</em>. Do both without changing pins.</p>
+      <p>All turns are hours as seen from the front: <code>3+</code> is three hours clockwise, <code>2-</code> two hours anticlockwise.</p>
+      <p>The small formula under each turn is what you would memorise to compute it from the scrambled faces (sum the listed clocks, then reduce to −5…6). Turns tagged <em>intuitive</em> can be done by eye: just line the clocks up.</p>
+    </details>
+  </section>
+
+  <footer>Linear-algebra method from <a href="https://github.com/chrnan6710/7sithrmarkdown">ClockClean.Rmd</a>. Everything runs in your browser; nothing is sent anywhere.</footer>
+</main>
+
+<script src="clock.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const FRONT_LAYOUT = ["UL", "U", "UR", "L", "C", "R", "DL", "D", "DR"];
+  const BACK_LAYOUT = [null, "Ub", null, "Lb", "Cb", "Rb", null, "Db", null];
+  const inputs = {};
+
+  function buildFace(container, layout) {
+    for (const name of layout) {
+      if (!name) { const b = document.createElement("div"); b.className = "blank"; container.appendChild(b); continue; }
+      const cell = document.createElement("div"); cell.className = "cell"; cell.dataset.name = name;
+      const inp = document.createElement("input");
+      inp.type = "number"; inp.min = 0; inp.max = 11; inp.step = 1; inp.value = 0; inp.inputMode = "numeric"; inp.setAttribute("aria-label", name);
+      inp.addEventListener("input", () => { setMsg("scrambleMsg", ""); update(); });
+      inp.addEventListener("focus", () => inp.select());
+      cell.appendChild(inp); container.appendChild(cell); inputs[name] = inp;
+    }
+  }
+  buildFace($("front"), FRONT_LAYOUT);
+  buildFace($("back"), BACK_LAYOUT);
+
+  const selects = [];
+  for (let i = 0; i < 7; i++) {
+    const sel = document.createElement("select"); sel.setAttribute("aria-label", "Pin state " + (i + 1));
+    for (const p of Clock.PIN_STATES) { const o = document.createElement("option"); o.value = p; o.textContent = p; sel.appendChild(o); }
+    sel.addEventListener("change", () => { saveOrder(); update(); });
+    $("pins").appendChild(sel); selects.push(sel);
+  }
+
+  function getState() {
+    return Clock.CLOCKS.map((n) => { const v = parseInt(inputs[n].value, 10); return Number.isFinite(v) ? ((v % 12) + 12) % 12 : 0; });
+  }
+  function setState(state) { Clock.CLOCKS.forEach((n, i) => { inputs[n].value = state[i]; }); }
+  function getOrder() { return selects.map((s) => s.value); }
+  function setOrder(order) { order.forEach((p, i) => { selects[i].value = p; }); saveOrder(); }
+  function saveOrder() { try { localStorage.setItem("clock7.order", getOrder().join(" ")); } catch (e) {} }
+  function setMsg(id, text, cls) { const el = $(id); el.textContent = text; el.className = "msg" + (cls ? " " + cls : ""); }
+
+  function pinDiagram(pinsUp) {
+    const d = document.createElement("div"); d.className = "pindiag"; d.title = "Pins up (UL UR / DL DR)";
+    for (const up of pinsUp) { const s = document.createElement("span"); if (up) s.classList.add("up"); d.appendChild(s); }
+    return d;
+  }
+  function turnBlock(label, amount, formula, intuitive, cls) {
+    const t = document.createElement("div"); t.className = "turn " + cls;
+    const what = document.createElement("div"); what.className = "what"; what.textContent = label;
+    if (intuitive) { const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = "intuitive"; what.appendChild(tag); }
+    const num = document.createElement("div"); num.className = "num" + (amount === 0 ? " zero" : ""); num.textContent = Clock.formatTurn(amount);
+    const f = document.createElement("div"); f.className = "formula"; f.textContent = intuitive ? "line it up by eye" : formula;
+    t.append(what, num, f); return t;
+  }
+
+  function update() {
+    const order = getOrder();
+    const state = getState();
+    const steps = $("steps"); steps.innerHTML = ""; $("summary").textContent = ""; $("stats").textContent = ""; setMsg("checkMsg", "");
+    const v = Clock.validateOrder(order);
+    if (v.errors.length) { setMsg("orderMsg", v.errors.join(" "), "bad"); return; }
+    setMsg("orderMsg", v.warnings.length ? v.warnings.join(" ") : "Valid 7-simul order: solves every scramble.", v.warnings.length ? "warn" : "ok");
+
+    const sol = Clock.solve(order, state);
+    if (!sol.ok) { setMsg("checkMsg", sol.reason, "bad"); return; }
+    const parts = [];
+    for (const st of sol.steps) {
+      const row = document.createElement("div"); row.className = "step";
+      const name = document.createElement("div"); name.className = "name"; name.textContent = st.pin;
+      row.append(pinDiagram(st.pinsUp), name,
+        turnBlock("Front wheel", st.front, st.frontFormula, st.frontIntuitive, "front"),
+        turnBlock("Back wheel", st.back, st.backFormula, st.backIntuitive, "back"));
+      steps.appendChild(row);
+      parts.push(st.pin + " " + Clock.formatTurn(st.front) + "/" + Clock.formatTurn(st.back));
+    }
+    $("summary").textContent = parts.join("   ");
+    const a = Clock.analyse(order);
+    const memo = a.memoLength.filter((n) => n > 0);
+    $("stats").textContent = "Method: " + (14 - a.intuitive.size) + " memorised turns, " + a.intuitive.size + " intuitive; "
+      + "memo formulas total " + memo.reduce((x, y) => x + y, 0) + " clocks (longest " + (memo.length ? Math.max(...memo) : 0) + ").";
+    const after = Clock.applyMoves(order, sol.raw, state);
+    const solved = after.every((h) => h === 0);
+    setMsg("checkMsg", solved ? "Checked: applying these turns brings every clock back to 12." : "Internal check failed; please report this scramble.", solved ? "ok" : "bad");
+  }
+
+  function applyScramble() {
+    const text = $("scramble").value;
+    try { setState(Clock.parseScramble(text)); setMsg("scrambleMsg", "Scramble applied to the faces.", "ok"); }
+    catch (e) { setMsg("scrambleMsg", e.message, "bad"); }
+    update();
+  }
+  $("apply").addEventListener("click", applyScramble);
+  $("scramble").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); applyScramble(); } });
+  $("random").addEventListener("click", () => { $("scramble").value = Clock.randomScramble(); applyScramble(); });
+  $("reset").addEventListener("click", () => { $("scramble").value = ""; setState(new Array(14).fill(0)); setMsg("scrambleMsg", ""); update(); });
+  for (const b of document.querySelectorAll(".presets button")) b.addEventListener("click", () => { setOrder(b.dataset.order.split(" ")); update(); });
+
+  // initial order: last used, else Tommy's
+  let initial = "dl R DR BS UL L ur";
+  try { initial = localStorage.getItem("clock7.order") || initial; } catch (e) {}
+  setOrder(initial.split(" "));
+  const q = new URLSearchParams(location.search).get("scramble");
+  if (q) { $("scramble").value = q; applyScramble(); } else update();
+})();
+</script>
+</body>
+</html>
