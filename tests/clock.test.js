@@ -90,8 +90,29 @@ test("validateOrder catches bad input and warns about determinant ±3 sets", () 
   assert.ok(found);
   assert.equal(Clock.validateOrder(found).warnings.length, 1);
   let failures = 0;
-  for (let h = 0; h < 12; h++) { const s = new Array(14).fill(0); s[4] = h; if (!Clock.solve(found, s).ok) failures++; }
+  for (let h = 0; h < 12; h++) { const s = new Array(14).fill(0); s[4] = h; if (Clock.solve(found, s).fractional) failures++; }
   assert.ok(failures > 0, "expected some unsolvable states for a determinant-3 set");
+});
+
+test("fractional turns of determinant ±3 sets are reported as thirds, flagged impossible", () => {
+  const cursed = "UR DL U D dr ul BS".split(" ");
+  const sol = Clock.solve(cursed, Clock.parseScramble("ALL1+"));
+  assert.equal(sol.ok, true);
+  assert.equal(sol.fractional, true);
+  assert.match(sol.reason, /thirds/);
+  const fractions = sol.raw.filter(Clock.isFraction);
+  assert.ok(fractions.length > 0);
+  for (const q of fractions) {
+    assert.equal(q.d, 3n); // only ±1/3 and ±2/3 (plus whole hours) can occur
+    assert.ok(q.toNumber() > -6 && q.toNumber() <= 6);
+  }
+  for (const st of sol.steps) for (const t of [st.front, st.back]) assert.match(Clock.formatTurn(t), /^(0|\d+[+-]|\d?[⅓⅔][+-])$/);
+  assert.equal(Clock.formatTurn(new Clock.Q(7n, 3n)), "2⅓+");
+  assert.equal(Clock.formatTurn(new Clock.Q(-2n, 3n)), "⅔-");
+  // a state this set can solve still comes out whole and passes the round-trip check
+  const fine = Clock.solve(cursed, Clock.parseScramble("UR4+ DR2- DL5+ UL1+ U3- R0+ D1+ L1- ALL2- y2 U5+ R2+ D1- L3+ ALL2+"));
+  assert.equal(fine.fractional, false);
+  assert.ok(Clock.applyMoves(cursed, fine.raw, Clock.parseScramble("UR4+ DR2- DL5+ UL1+ U3- R0+ D1+ L1- ALL2- y2 U5+ R2+ D1- L3+ ALL2+")).every((h) => h === 0));
 });
 
 test("the pages show BS as a backslash and FS as a slash", () => {

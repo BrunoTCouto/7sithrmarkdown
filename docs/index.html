@@ -78,6 +78,8 @@
   .step .name { font-weight: 600; font-size: 1.1rem; }
   .step .num { font-weight: 600; font-family: var(--mono); font-size: 1.2rem; }
   .step .num.zero { color: var(--muted); font-weight: 400; }
+  .step .num.impossible { color: var(--bad); }
+  .tag.bad { background: var(--exclude, #f8e5e3); color: var(--bad); }
   .turn .what { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
   .turn .formula { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); word-break: break-word; }
   .tag { display: inline-block; font-size: 0.7rem; padding: 1px 6px; border-radius: 999px; background: var(--intuitive); color: var(--intuitive-ink); margin-left: 4px; vertical-align: middle; }
@@ -254,7 +256,9 @@
     const t = document.createElement("div"); t.className = "turn " + cls;
     const what = document.createElement("div"); what.className = "what"; what.textContent = label;
     if (intuitive) { const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = "intuitive"; what.appendChild(tag); }
-    const num = document.createElement("div"); num.className = "num" + (amount === 0 ? " zero" : ""); num.textContent = Clock.formatTurn(amount);
+    const impossible = Clock.isFraction(amount);
+    if (impossible) { const tag = document.createElement("span"); tag.className = "tag bad"; tag.textContent = "impossible"; what.appendChild(tag); }
+    const num = document.createElement("div"); num.className = "num" + (amount === 0 ? " zero" : impossible ? " impossible" : ""); num.textContent = Clock.formatTurn(amount);
     const f = document.createElement("div"); f.className = "formula"; f.textContent = intuitive ? "line it up by eye" : formula;
     t.append(what, num, f); return t;
   }
@@ -284,6 +288,7 @@
     const memo = a.memoLength.filter((n) => n > 0);
     $("stats").textContent = "Method: " + (14 - a.intuitive.size) + " memorised turns, " + a.intuitive.size + " intuitive; "
       + "memo formulas total " + memo.reduce((x, y) => x + y, 0) + " clocks (longest " + (memo.length ? Math.max(...memo) : 0) + ").";
+    if (sol.fractional) { setMsg("checkMsg", sol.reason, "bad"); return; }
     const after = Clock.applyMoves(order, sol.raw, state);
     const solved = after.every((h) => h === 0);
     setMsg("checkMsg", solved ? "Checked: applying these turns brings every clock back to 12." : "Internal check failed; please report this scramble.", solved ? "ok" : "bad");

@@ -178,7 +178,26 @@
 
   /** Normalise a turn to the range -5..6 hours. */
   function normTurn(v) { return ((((v + 5) % 12) + 12) % 12) - 5; }
-  function formatTurn(v) { return v === 0 ? "0" : Math.abs(v) + (v > 0 ? "+" : "-"); }
+  /** Normalise a fractional turn (a Q) to the range (-6, 6]. Such turns only occur with determinant ±3 pin sets. */
+  function normFrac(q) {
+    const m = 12n * q.d;
+    let n = ((q.n % m) + m) % m;
+    if (n > 6n * q.d) n -= m;
+    return new Q(n, q.d);
+  }
+  function isFraction(v) { return v instanceof Q && !v.isInt(); }
+  const VULGAR = { "1/3": "⅓", "2/3": "⅔" };
+  /** "3+", "2-", "0", or for fractional turns "⅓+", "2⅔-". */
+  function formatTurn(v) {
+    if (v instanceof Q) {
+      if (v.isInt()) return formatTurn(Number(v.n));
+      const neg = v.n < 0n, n = neg ? -v.n : v.n;
+      const whole = n / v.d, rem = n % v.d + "/" + v.d;
+      const frac = VULGAR[rem] || (whole ? " " : "") + rem;
+      return (whole ? whole : "") + frac + (neg ? "-" : "+");
+    }
+    return v === 0 ? "0" : Math.abs(v) + (v > 0 ? "+" : "-");
+  }
 
   /** Validate a pin order. Returns a list of problems (empty = fine) and warnings. */
   function validateOrder(order) {
@@ -204,9 +223,10 @@
     const a = analyse(order);
     const neg = state.map((h) => new Q(BigInt(-(((h % 12) + 12) % 12))));
     const x = a.inv.map((row) => row.reduce((acc, q, c) => acc.add(q.mul(neg[c])), new Q(0n)));
-    if (x.some((q) => !q.isInt()))
-      return { ok: false, reason: "This scramble has no solution with this pin order (the maths comes out in thirds). Pick another order.", warnings: v.warnings };
-    const raw = x.map((q) => normTurn(Number(q.n)));
+    // With a determinant ±3 pin set the turns can come out in thirds of an hour. They are still
+    // reported (as Q values, flagged `fractional`) so the page can show them, but they cannot be done.
+    const fractional = x.some((q) => !q.isInt());
+    const raw = x.map((q) => (q.isInt() ? normTurn(Number(q.n)) : normFrac(q)));
     const steps = order.map((pin, i) => ({
       pin,
       pinsUp: PINS_UP[pin],
@@ -217,7 +237,9 @@
       frontFormula: a.formulas[2 * i],
       backFormula: a.formulas[2 * i + 1],
     }));
-    return { ok: true, steps, raw, warnings: v.warnings, det: a.det.toString() };
+    const result = { ok: true, steps, raw, warnings: v.warnings, det: a.det.toString(), fractional };
+    if (fractional) result.reason = "This scramble has no solution with this pin order: the turns marked in red come out in thirds of an hour, which the puzzle cannot do. Pick another order.";
+    return result;
   }
 
   /** Apply a list of 14 raw move amounts (same column order as moveMatrix) to a state. */
@@ -265,6 +287,6 @@
   return {
     CLOCKS, PIN_STATES, MOVES, PINS_UP, PIN_LABELS, pinLabel, pinFromLabel, Q,
     moveMatrix, invertExact, analyse, intuitiveMoves, validateOrder, solve, applyMoves,
-    parseScramble, randomScramble, formatTurn, normTurn, formatFormula,
+    parseScramble, randomScramble, formatTurn, normTurn, normFrac, isFraction, formatFormula,
   };
 });
