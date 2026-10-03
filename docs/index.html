@@ -86,12 +86,16 @@
   details { margin-top: 16px; }
   details summary { cursor: pointer; color: var(--muted); }
   details p { margin: 6px 0; font-size: 0.9rem; }
+  nav { font-size: 0.9rem; color: var(--muted); margin-bottom: 16px; }
+  nav a { color: var(--accent); }
+  nav strong { color: var(--ink); }
   footer { color: var(--muted); font-size: 0.8rem; margin-top: 32px; }
   footer a { color: inherit; }
 </style>
 </head>
 <body>
 <main>
+  <nav><strong>Solver</strong> · <a href="orders.html">Pin order finder</a></nav>
   <h1>Clock 7-Simul Solver</h1>
   <p class="lede">Paste a scramble or type the clock faces, pick your seven pin states, and get the fourteen wheel turns that solve it.</p>
 
@@ -297,11 +301,14 @@
   $("reset").addEventListener("click", () => { $("scramble").value = ""; setState(new Array(14).fill(0)); setMsg("scrambleMsg", ""); update(); });
   for (const b of document.querySelectorAll(".presets button")) b.addEventListener("click", () => { setOrder(b.dataset.order.split(" ")); update(); });
 
-  // initial order: last used, else Tommy's
+  // initial order: from the URL (?order=dl+R+DR+…, as linked from the pin order finder), else last used, else Tommy's
+  const params = new URLSearchParams(location.search);
   let initial = "dl R DR BS UL L ur";
   try { initial = localStorage.getItem("clock7.order") || initial; } catch (e) {}
+  const urlOrder = (params.get("order") || "").trim().split(/\s+/).filter(Boolean);
+  if (urlOrder.length === 7 && urlOrder.every((p) => Clock.PIN_STATES.includes(p))) initial = urlOrder.join(" ");
   setOrder(initial.split(" "));
-  const q = new URLSearchParams(location.search).get("scramble");
+  const q = params.get("scramble");
   if (q) { $("scramble").value = q; applyScramble(); } else update();
 })();
 </script>
