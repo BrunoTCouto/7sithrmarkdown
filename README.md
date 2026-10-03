@@ -16,14 +16,16 @@ Branch: `main`, folder `/docs`**. The page is static and runs entirely in the br
 * Paste a WCA scramble (`UR2+ DR3- … y2 U5+ …`) or set the 14 clock dials by tapping or dragging the hands (arrow keys and digits work too). The back face shows the geared corner dials as on the real puzzle.
 * Pick a 7-simul pin order (the three from the notebook are presets; the last one you used is remembered).
 * Read off the 14 turns, each with the memo formula you would use to compute it, and which turns are intuitive.
-* A link with `?scramble=UR2%2B+DR3-+…` opens the page with that scramble applied; `?order=dl+R+DR+…` preselects a pin order.
+* Everything on the form (scramble, the 14 faces, pin order) is kept in the URL as you change it, so the address bar is always a link to what you see; **Share link** copies it. `?scramble=UR2%2B+DR3-+…` applies a scramble, `?state=11,9,…` sets the 14 faces directly, `?order=dl+R+DR+…` preselects a pin order.
 
 ## Pin order finder
 
 `docs/orders.html` searches all 1,370,880 orderings of the 272 working pin sets, scored the way
 the notebook scores them (memo lengths, memorised vs. intuitive turns, D-wheel pin states, pin
 changes). Require or exclude pin states, fix the first or last one, cap any statistic, sort, and
-open an order in the solver. Rows from the four determinant ±3 sets are marked `det ±3`.
+open an order in the solver. Rows from the four determinant ±3 sets are marked `det ±3`. The filters
+and sort live in the URL too (`?require=dl+\&exclude=/&first=dl&memorised=6&sort=memorized&dir=desc`),
+and **Share link** copies it.
 
 The numbers come from `node scripts/build-orders.js`, a port of the notebook's statistics loop,
 and are committed as plain CSV so they can be read on GitHub:

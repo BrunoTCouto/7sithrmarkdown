@@ -32,9 +32,11 @@
   main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
   h1 { font-size: 1.6rem; margin: 0 0 4px; }
   h2 { font-size: 1.05rem; margin: 0 0 12px; }
-  nav { font-size: 0.9rem; color: var(--muted); margin-bottom: 16px; }
+  nav { font-size: 0.9rem; color: var(--muted); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   nav a { color: var(--accent); }
   nav strong { color: var(--ink); }
+  nav .spacer { flex: 1; }
+  nav .msg { margin: 0; min-height: 0; }
   .lede { color: var(--muted); margin: 0 0 20px; }
   section.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 16px; }
   label { font-size: 0.85rem; color: var(--muted); display: block; }
@@ -89,7 +91,7 @@
 </head>
 <body>
 <main>
-  <nav><a href="index.html">Solver</a> · <strong>Pin order finder</strong></nav>
+  <nav><a href="index.html">Solver</a> · <strong>Pin order finder</strong><span class="spacer"></span><span class="msg" id="shareMsg"></span><button class="small" id="share" title="Copy a link to these filters and this sort">Share link</button></nav>
   <h1>Clock Pin Order Finder</h1>
   <p class="lede">All 1,370,880 orderings of the 272 working 7-simul pin sets, scored as in the notebook. Narrow them down, sort, and open any order in the solver.</p>
 
@@ -240,14 +242,16 @@
 
   // ---------- filters ----------
   const chipState = new Array(14).fill(0); // 0 neutral, 1 require, 2 exclude
+  const chips = [];
+  function setChip(i, v) { chipState[i] = v; chips[i].className = "chip" + (v === 1 ? " require" : v === 2 ? " exclude" : ""); }
   function buildChips() {
     const box = $("chips");
     PINS.forEach((p, i) => {
       const b = document.createElement("span"); b.className = "chip"; b.textContent = Clock.pinLabel(p); b.setAttribute("role", "button"); b.tabIndex = 0;
-      const cycle = () => { chipState[i] = (chipState[i] + 1) % 3; b.className = "chip" + (chipState[i] === 1 ? " require" : chipState[i] === 2 ? " exclude" : ""); run(); };
+      const cycle = () => { setChip(i, (chipState[i] + 1) % 3); run(); };
       b.addEventListener("click", cycle);
       b.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); cycle(); } });
-      box.appendChild(b);
+      box.appendChild(b); chips.push(b);
     });
     for (const id of ["first", "last"]) {
       const sel = $(id);
@@ -277,7 +281,44 @@
     return 0;
   }
 
+  // The filters live in the URL so a search can be bookmarked or shared.
+  const NUM_PARAMS = { maxMemorized: "memorised", maxMax: "maxmemo", maxSum: "memo", maxMean: "mean", maxD: "d", maxPinMax: "pinstep", maxPinSum: "pins" };
+  function syncUrl() {
+    const p = new URLSearchParams();
+    const req = PINS.filter((_, i) => chipState[i] === 1), exc = PINS.filter((_, i) => chipState[i] === 2);
+    if (req.length) p.set("require", req.map(Clock.pinLabel).join(" "));
+    if (exc.length) p.set("exclude", exc.map(Clock.pinLabel).join(" "));
+    if ($("first").value) p.set("first", Clock.pinLabel($("first").value));
+    if ($("last").value) p.set("last", Clock.pinLabel($("last").value));
+    if ($("hideThirds").checked) p.set("hidethirds", "1");
+    for (const id in NUM_PARAMS) if ($(id).value.trim() !== "") p.set(NUM_PARAMS[id], $(id).value.trim());
+    if ($("sortBy").value !== "sum") p.set("sort", $("sortBy").value);
+    if (!dirAsc) p.set("dir", "desc");
+    const qs = p.toString();
+    history.replaceState(null, "", qs ? "?" + qs : location.pathname);
+  }
+  function readUrl() {
+    const p = new URLSearchParams(location.search);
+    const pinsOf = (key) => (p.get(key) || "").split(/[\s,]+/).filter(Boolean).map(Clock.pinFromLabel).filter((x) => x in PIN_INDEX);
+    for (const x of pinsOf("require")) setChip(PIN_INDEX[x], 1);
+    for (const x of pinsOf("exclude")) setChip(PIN_INDEX[x], 2);
+    for (const id of ["first", "last"]) { const x = Clock.pinFromLabel(p.get(id) || ""); if (x in PIN_INDEX) $(id).value = x; }
+    $("hideThirds").checked = p.get("hidethirds") === "1";
+    for (const id in NUM_PARAMS) { const v = p.get(NUM_PARAMS[id]); if (v !== null && v !== "" && !isNaN(Number(v))) $(id).value = v; }
+    const sort = p.get("sort");
+    if (sort && [...$("sortBy").options].some((o) => o.value === sort)) $("sortBy").value = sort;
+    dirAsc = p.get("dir") !== "desc"; $("dir").textContent = dirAsc ? "ascending ↑" : "descending ↓";
+  }
+  function setMsg(id, text, cls) { const el = $(id); el.textContent = text; el.className = "msg" + (cls ? " " + cls : ""); }
+  function share() {
+    const url = location.href;
+    const done = (ok) => { setMsg("shareMsg", ok ? "Link copied" : "Copy the address bar", ok ? "ok" : "warn"); setTimeout(() => setMsg("shareMsg", ""), 2500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(() => done(true), () => done(false));
+    else done(false);
+  }
+
   function run() {
+    syncUrl();
     if (!N) return;
     let req = 0, exc = 0;
     chipState.forEach((s, i) => { if (s === 1) req |= 1 << i; else if (s === 2) exc |= 1 << i; });
@@ -375,13 +416,15 @@
   for (const id of ["first", "last", "hideThirds", "sortBy"]) $(id).addEventListener("change", run);
   $("dir").addEventListener("click", () => { dirAsc = !dirAsc; $("dir").textContent = dirAsc ? "ascending ↑" : "descending ↓"; run(); });
   $("more").addEventListener("click", showMore);
+  $("share").addEventListener("click", share);
   $("reset").addEventListener("click", () => {
-    chipState.fill(0); document.querySelectorAll(".chip").forEach((b) => { b.className = "chip"; });
+    for (let i = 0; i < 14; i++) setChip(i, 0);
     for (const id of ["maxMemorized", "maxMax", "maxSum", "maxMean", "maxD", "maxPinMax", "maxPinSum"]) $(id).value = "";
     $("first").value = ""; $("last").value = ""; $("hideThirds").checked = false; $("sortBy").value = "sum"; dirAsc = true; $("dir").textContent = "ascending ↑";
     run();
   });
 
+  readUrl();
   load().then(() => {
     $("loading").hidden = true; $("filtersCard").hidden = false; $("resultsCard").hidden = false;
     run();

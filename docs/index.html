@@ -88,16 +88,19 @@
   details { margin-top: 16px; }
   details summary { cursor: pointer; color: var(--muted); }
   details p { margin: 6px 0; font-size: 0.9rem; }
-  nav { font-size: 0.9rem; color: var(--muted); margin-bottom: 16px; }
+  nav { font-size: 0.9rem; color: var(--muted); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   nav a { color: var(--accent); }
   nav strong { color: var(--ink); }
+  nav .spacer { flex: 1; }
+  nav button { padding: 5px 10px; font-size: 0.85rem; }
+  nav .msg { margin: 0; min-height: 0; }
   footer { color: var(--muted); font-size: 0.8rem; margin-top: 32px; }
   footer a { color: inherit; }
 </style>
 </head>
 <body>
 <main>
-  <nav><strong>Solver</strong> · <a href="orders.html">Pin order finder</a></nav>
+  <nav><strong>Solver</strong> · <a href="orders.html">Pin order finder</a><span class="spacer"></span><span class="msg" id="shareMsg"></span><button id="share" title="Copy a link to this scramble, these faces and this pin order">Share link</button></nav>
   <h1>Clock 7-Simul Solver</h1>
   <p class="lede">Paste a scramble or type the clock faces, pick your seven pin states, and get the fourteen wheel turns that solve it.</p>
 
@@ -263,7 +266,26 @@
     t.append(what, num, f); return t;
   }
 
+  // Keep the whole form in the URL so the page can be bookmarked or shared as it is.
+  function syncUrl() {
+    const p = new URLSearchParams();
+    const text = $("scramble").value.trim();
+    if (text) p.set("scramble", text);
+    if (state.some((h) => h !== 0)) p.set("state", state.join(","));
+    p.set("order", getOrder().map(Clock.pinLabel).join(" "));
+    const qs = p.toString();
+    history.replaceState(null, "", qs ? "?" + qs : location.pathname);
+  }
+  function share() {
+    const url = location.href;
+    const done = (ok) => { setMsg("shareMsg", ok ? "Link copied" : "Copy the address bar", ok ? "ok" : "warn"); setTimeout(() => setMsg("shareMsg", ""), 2500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(() => done(true), () => done(false));
+    else done(false);
+  }
+  $("share").addEventListener("click", share);
+
   function update() {
+    syncUrl();
     const order = getOrder();
     const state = getState();
     const steps = $("steps"); steps.innerHTML = ""; $("summary").textContent = ""; $("stats").textContent = ""; setMsg("checkMsg", "");
@@ -302,6 +324,7 @@
   }
   $("apply").addEventListener("click", applyScramble);
   $("scramble").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); applyScramble(); } });
+  $("scramble").addEventListener("input", syncUrl);
   $("random").addEventListener("click", () => { $("scramble").value = Clock.randomScramble(); applyScramble(); });
   $("reset").addEventListener("click", () => { $("scramble").value = ""; setState(new Array(14).fill(0)); setMsg("scrambleMsg", ""); update(); });
   for (const b of document.querySelectorAll(".presets button")) b.addEventListener("click", () => { setOrder(b.dataset.order.split(" ")); update(); });
@@ -313,8 +336,13 @@
   const urlOrder = (params.get("order") || "").trim().split(/\s+/).filter(Boolean).map(Clock.pinFromLabel);
   if (urlOrder.length === 7 && urlOrder.every((p) => Clock.PIN_STATES.includes(p))) initial = urlOrder.join(" ");
   setOrder(initial.split(" "));
+  // faces: ?state=14 hours (dials as last set) wins over ?scramble=, which is applied fresh
   const q = params.get("scramble");
-  if (q) { $("scramble").value = q; applyScramble(); } else update();
+  if (q) $("scramble").value = q;
+  const urlState = (params.get("state") || "").split(",").map((s) => parseInt(s, 10));
+  if (urlState.length === 14 && urlState.every((h) => Number.isInteger(h))) { setState(urlState); update(); }
+  else if (q) applyScramble();
+  else update();
 })();
 </script>
 </body>
