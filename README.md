@@ -13,7 +13,7 @@ Open `docs/index.html` in a browser, or host the `docs/` folder on GitHub Pages:
 repository **Settings → Pages → Build and deployment → Source: Deploy from a branch →
 Branch: `main`, folder `/docs`**. The page is static and runs entirely in the browser.
 
-* Paste a WCA scramble (`UR2+ DR3- … y2 U5+ …`) or type the 14 clock faces by hand.
+* Paste a WCA scramble (`UR2+ DR3- … y2 U5+ …`) or set the 14 clock dials by tapping or dragging the hands (arrow keys and digits work too). The back face shows the geared corner dials as on the real puzzle.
 * Pick a 7-simul pin order (the three from the notebook are presets; the last one you used is remembered).
 * Read off the 14 turns, each with the memo formula you would use to compute it, and which turns are intuitive.
 * A link with `?scramble=UR2%2B+DR3-+…` opens the page with that scramble applied.

@@ -9,20 +9,20 @@
   :root {
     --bg: #f6f5f1; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #dcdad3;
     --accent: #1f5f8b; --accent-ink: #ffffff; --ok: #2e7d4f; --warn: #a2620b; --bad: #b3261e;
-    --pin-up: #1d1d1b; --pin-down: #d7d5cd; --chip: #eef1f4; --intuitive: #e8f3ec; --intuitive-ink: #2e7d4f;
+    --pin-up: #1d1d1b; --pin-down: #d7d5cd; --chip: #eef1f4; --dial: #fbf8ea; --intuitive: #e8f3ec; --intuitive-ink: #2e7d4f;
     --radius: 12px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #343537;
       --accent: #6fb1e0; --accent-ink: #0f1a22; --ok: #6cc38f; --warn: #e0a24a; --bad: #ef7a73;
-      --pin-up: #ecebe6; --pin-down: #3b3c3e; --chip: #2a2c2e; --intuitive: #1d3327; --intuitive-ink: #8fd4ab;
+      --pin-up: #ecebe6; --pin-down: #3b3c3e; --chip: #2a2c2e; --dial: #26272a; --intuitive: #1d3327; --intuitive-ink: #8fd4ab;
     }
   }
   :root[data-theme="dark"] {
     --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #343537;
     --accent: #6fb1e0; --accent-ink: #0f1a22; --ok: #6cc38f; --warn: #e0a24a; --bad: #ef7a73;
-    --pin-up: #ecebe6; --pin-down: #3b3c3e; --chip: #2a2c2e; --intuitive: #1d3327; --intuitive-ink: #8fd4ab;
+    --pin-up: #ecebe6; --pin-down: #3b3c3e; --chip: #2a2c2e; --dial: #26272a; --intuitive: #1d3327; --intuitive-ink: #8fd4ab;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -48,12 +48,21 @@
   .faces { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
   .face { text-align: center; }
   .face .title { font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
-  .clockgrid { display: grid; grid-template-columns: repeat(3, 56px); gap: 6px; }
-  .clockgrid .cell { position: relative; }
-  .clockgrid input { width: 56px; height: 56px; text-align: center; font-size: 1.15rem; padding: 0; -moz-appearance: textfield; }
-  .clockgrid input::-webkit-outer-spin-button, .clockgrid input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .clockgrid .cell::after { content: attr(data-name); position: absolute; left: 4px; top: 2px; font-size: 0.6rem; color: var(--muted); pointer-events: none; }
-  .clockgrid .blank { width: 56px; height: 56px; }
+  .clockgrid { display: grid; grid-template-columns: repeat(3, 68px); gap: 6px; }
+  @media (max-width: 400px) { .clockgrid { grid-template-columns: repeat(3, 58px); } }
+  .dial { position: relative; width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; touch-action: none; outline: none; }
+  .dial:focus-visible { box-shadow: 0 0 0 3px var(--accent); }
+  .dial svg { width: 100%; height: 100%; display: block; }
+  .dial .face-bg { fill: var(--dial); stroke: var(--line); stroke-width: 2; }
+  .dial .tick { stroke: var(--muted); stroke-width: 2; stroke-linecap: round; }
+  .dial .tick.twelve { stroke: var(--accent); stroke-width: 4; }
+  .dial .hand { stroke: var(--ink); stroke-width: 6; stroke-linecap: round; }
+  .dial .hub { fill: var(--ink); }
+  .dial.linked .face-bg { fill: var(--chip); stroke-dasharray: 3 3; }
+  .dial.linked .hand { stroke: var(--muted); }
+  .dial.linked .hub { fill: var(--muted); }
+  .dial .lbl { position: absolute; left: 6px; top: 2px; font-size: 0.6rem; color: var(--muted); pointer-events: none; }
+  .dial .hour { position: absolute; right: 6px; bottom: 1px; font-size: 0.6rem; color: var(--muted); font-family: var(--mono); pointer-events: none; }
 
   .pins { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
   .pins select { width: 100%; padding: 8px 4px; text-align: center; }
@@ -111,7 +120,7 @@
           <div class="clockgrid" id="back"></div>
         </div>
       </div>
-      <div class="msg" id="stateMsg">Hours 0–11; 12 o'clock is 0. Edit the faces directly if you prefer.</div>
+      <div class="msg" id="stateMsg">Tap or drag a dial to set its hand; arrow keys and digits work too. Dashed back corners are geared to the front ones.</div>
     </section>
   </div>
 
@@ -150,22 +159,72 @@
 (function () {
   const $ = (id) => document.getElementById(id);
   const FRONT_LAYOUT = ["UL", "U", "UR", "L", "C", "R", "DL", "D", "DR"];
-  const BACK_LAYOUT = [null, "Ub", null, "Lb", "Cb", "Rb", null, "Db", null];
-  const inputs = {};
+  // Back face as seen after a y2: corners are the front corners mirrored and geared (hour = -front hour).
+  const BACK_LAYOUT = ["UR*", "Ub", "UL*", "Lb", "Cb", "Rb", "DR*", "Db", "DL*"];
+  const state = new Array(14).fill(0);
+  const dials = [];
+  const NS = "http://www.w3.org/2000/svg";
+  const idx = (name) => Clock.CLOCKS.indexOf(name);
 
-  function buildFace(container, layout) {
-    for (const name of layout) {
-      if (!name) { const b = document.createElement("div"); b.className = "blank"; container.appendChild(b); continue; }
-      const cell = document.createElement("div"); cell.className = "cell"; cell.dataset.name = name;
-      const inp = document.createElement("input");
-      inp.type = "number"; inp.min = 0; inp.max = 11; inp.step = 1; inp.value = 0; inp.inputMode = "numeric"; inp.setAttribute("aria-label", name);
-      inp.addEventListener("input", () => { setMsg("scrambleMsg", ""); update(); });
-      inp.addEventListener("focus", () => inp.select());
-      cell.appendChild(inp); container.appendChild(cell); inputs[name] = inp;
+  function svgEl(tag, attrs) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+
+  function buildDial(container, name) {
+    const linked = name.endsWith("*");
+    const base = linked ? name.slice(0, -1) : name;
+    const el = document.createElement("div");
+    el.className = "dial" + (linked ? " linked" : "");
+    el.tabIndex = 0; el.setAttribute("role", "slider"); el.setAttribute("aria-valuemin", 0); el.setAttribute("aria-valuemax", 11);
+    el.setAttribute("aria-label", linked ? base + " seen from the back" : base);
+    el.title = linked ? base + " corner seen from the back (geared to the front " + base + ")" : base;
+    const svg = svgEl("svg", { viewBox: "0 0 100 100" });
+    svg.appendChild(svgEl("circle", { class: "face-bg", cx: 50, cy: 50, r: 46 }));
+    for (let hh = 0; hh < 12; hh++) {
+      const a = (hh * 30 * Math.PI) / 180, len = hh === 0 ? 9 : 5;
+      svg.appendChild(svgEl("line", { class: "tick" + (hh === 0 ? " twelve" : ""),
+        x1: 50 + 40 * Math.sin(a), y1: 50 - 40 * Math.cos(a), x2: 50 + (40 - len) * Math.sin(a), y2: 50 - (40 - len) * Math.cos(a) }));
+    }
+    const hand = svgEl("line", { class: "hand", x1: 50, y1: 50, x2: 50, y2: 20 });
+    svg.appendChild(hand);
+    svg.appendChild(svgEl("circle", { class: "hub", cx: 50, cy: 50, r: 5 }));
+    el.appendChild(svg);
+    const lbl = document.createElement("span"); lbl.className = "lbl"; lbl.textContent = base; el.appendChild(lbl);
+    const hourLbl = document.createElement("span"); hourLbl.className = "hour"; el.appendChild(hourLbl);
+    container.appendChild(el);
+
+    const i = idx(base);
+    const shown = () => (linked ? (12 - state[i]) % 12 : state[i]);
+    const setShown = (hour) => { hour = ((hour % 12) + 12) % 12; state[i] = linked ? (12 - hour) % 12 : hour; setMsg("scrambleMsg", ""); render(); update(); };
+    const fromPointer = (ev) => {
+      const r = el.getBoundingClientRect();
+      const dx = ev.clientX - (r.left + r.width / 2), dy = ev.clientY - (r.top + r.height / 2);
+      if (dx * dx + dy * dy < 16) return; // ignore the very centre
+      const deg = (Math.atan2(dx, -dy) * 180) / Math.PI;
+      setShown(Math.round(((deg + 360) % 360) / 30));
+    };
+    let dragging = false;
+    el.addEventListener("pointerdown", (ev) => { dragging = true; el.setPointerCapture(ev.pointerId); el.focus(); fromPointer(ev); ev.preventDefault(); });
+    el.addEventListener("pointermove", (ev) => { if (dragging) fromPointer(ev); });
+    el.addEventListener("pointerup", () => { dragging = false; });
+    el.addEventListener("pointercancel", () => { dragging = false; });
+    el.addEventListener("wheel", (ev) => { ev.preventDefault(); setShown(shown() + (ev.deltaY < 0 ? 1 : -1)); }, { passive: false });
+    el.addEventListener("keydown", (ev) => {
+      if (ev.key === "ArrowUp" || ev.key === "ArrowRight") { setShown(shown() + 1); ev.preventDefault(); }
+      else if (ev.key === "ArrowDown" || ev.key === "ArrowLeft") { setShown(shown() - 1); ev.preventDefault(); }
+      else if (/^[0-9]$/.test(ev.key)) { setShown(parseInt(ev.key, 10)); ev.preventDefault(); }
+      else if (ev.key === "Home") { setShown(0); ev.preventDefault(); }
+    });
+    dials.push({ el, hand, hourLbl, shown });
+  }
+  function render() {
+    for (const d of dials) {
+      const hr = d.shown();
+      d.hand.setAttribute("transform", "rotate(" + hr * 30 + " 50 50)");
+      d.el.setAttribute("aria-valuenow", hr);
+      d.hourLbl.textContent = hr === 0 ? "12" : hr;
     }
   }
-  buildFace($("front"), FRONT_LAYOUT);
-  buildFace($("back"), BACK_LAYOUT);
+  for (const n of FRONT_LAYOUT) buildDial($("front"), n);
+  for (const n of BACK_LAYOUT) buildDial($("back"), n);
 
   const selects = [];
   for (let i = 0; i < 7; i++) {
@@ -175,10 +234,8 @@
     $("pins").appendChild(sel); selects.push(sel);
   }
 
-  function getState() {
-    return Clock.CLOCKS.map((n) => { const v = parseInt(inputs[n].value, 10); return Number.isFinite(v) ? ((v % 12) + 12) % 12 : 0; });
-  }
-  function setState(state) { Clock.CLOCKS.forEach((n, i) => { inputs[n].value = state[i]; }); }
+  function getState() { return state.slice(); }
+  function setState(s) { for (let i = 0; i < 14; i++) state[i] = ((s[i] % 12) + 12) % 12; render(); }
   function getOrder() { return selects.map((s) => s.value); }
   function setOrder(order) { order.forEach((p, i) => { selects[i].value = p; }); saveOrder(); }
   function saveOrder() { try { localStorage.setItem("clock7.order", getOrder().join(" ")); } catch (e) {} }
