@@ -1,0 +1,571 @@
+---
+title: "ClockClean"
+output: html_document
+date: "2025-07-18"
+---
+
+```{r}
+require(Matrix)
+require(tibble)
+require(evaluate)
+require(dplyr)
+require(combinat)
+```
+
+For every pair of simultaneous moves (all of which correspond to a pin state), I create a 14x2 matrix "[pin state]" in which the first column represents the front move and the second the back. 1 means clockwise one hour, -1 means counterclockwise one hour. The last five entries in each column are negated because a CW move on the front means a CWW move on the back clocks and V.V.
+
+```{r}
+UR = matrix(c(0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+1, 0, 0, 0, 0, 0, 1, 0, 1, -1, -1, -1, -1, -1), nrow=14, ncol=2)
+
+DR = matrix(c(0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0,
+1, 0, 1, 0, 0, 0, 1, 0, 0, -1, -1, -1, -1, -1), nrow=14, ncol=2)
+
+DL = matrix(c(0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0,
+1, 0, 1, 0, 0, 0, 0, 0, 1, -1, -1, -1, -1, -1), nrow=14, ncol=2)
+
+UL = matrix(c(1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 1, 0, 0, 0, 1, 0, 1, -1, -1, -1, -1, -1), nrow=14, ncol=2)
+
+U = matrix(c(1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 1, 0, 1, 0, -1, -1, -1, -1), nrow=14, ncol=2)
+
+L = matrix(c(1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0,
+0, 0, 1, 0, 0, 0, 0, 0, 1, -1, -1, -1, 0, -1), nrow=14, ncol=2)
+
+D = matrix(c(0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+1, 0, 1, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0), nrow=14, ncol=2)
+
+R = matrix(c(0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0,
+1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, -1, -1, -1), nrow=14, ncol=2)
+
+dl = matrix(c(1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, -1, -1), nrow=14, ncol=2)
+
+dr = matrix(c(1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1, -1, 0, -1), nrow=14, ncol=2)
+
+ur = matrix(c(1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+0, 0, 1, 0, 0, 0, 0, 0, 0, -1, -1, -1, 0, 0), nrow=14, ncol=2)
+
+ul = matrix(c(0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, -1, 0), nrow=14, ncol=2)
+
+BS = matrix(c(1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0,
+0, 0, 1, 0, 0, 0, 1, 0, 0, -1, -1, -1, -1, -1), nrow=14, ncol=2)
+
+FS = matrix(c(0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+1, 0, 0, 0, 0, 0, 0, 0, 1, -1, -1, -1, -1, -1), nrow=14, ncol=2)
+```
+
+
+
+I define a dataframe "pindf" with 14 observations and 4 variables, the four variables being the state of the pins UL, UR, DL, and DR in that order, where 1 is up and 0 is down. I've written it out like a matrix; it should be thought of as the transpose of that matrix, with four rows and 14 columns.
+
+pindf$[PIN STATE] returns a vector of the individual pin states.
+
+```{r}
+pindf = as.data.frame(
+  
+  matrix(
+    
+    c(
+      
+      0, 1, 0, 0,
+      0, 0, 0, 1,
+      0, 0, 1, 0,
+      1, 0, 0, 0,
+      1, 1, 0, 0,
+      1, 0, 1, 0,
+      0, 0, 1, 1,
+      0, 1, 0, 1,
+      1, 1, 0, 1,
+      1, 1, 1, 0,
+      1, 0, 1, 1,
+      0, 1, 1, 1,
+      1, 0, 0, 1,
+      0, 1, 1, 0
+      
+    ), ncol = 14, nrow = 4
+    
+  )
+  
+)
+
+names(pindf) = c("UR", "DR", "DL", "UL", "U", "L", "D", "R", "dl", "dr", "ur", "ul", "BS", "FS")
+```
+
+
+
+I define a function "roundThird" to deal with floating point precision errors in calculated solutions. The native rounding functions of R don't seem to do what I want. This function rounds to the nearest third and displays 2 decimals; it does so by multiplying the input by 3, rounding it to the nearest integer, and dividing the result by 3, thus leaving each number rounded to the nearest "third", or integer/3. Capiche?
+
+```{r}
+
+thround <- function(num) {
+  
+  return(
+    
+    signif(round(3*num)/3,2)
+    
+  )
+  
+}
+
+```
+
+
+
+I test all combinations of 7 pins sets for their ability to solve any clock scramble ("Valid"). To test whether a set works, I put the seven 14x2 simul move matrices side by side into a 14x14 matrix and test if its rank is 14. If it is, that means for any length-14 vector, a linear combination of the matrix' columns exists that equals that vector. In clock language, for any state of the clock, there exists a combination of the 14 tested clock moves that results in that state. The combination that results in the opposite of a given state of a clock is the solution to that state; since that always exists, every clock scramble therefore has a solution in the tested moves.
+
+I store the valid pin sets in a data frame "r14Sets", where the observations are the pin sets and the variables are the seven pin states.
+
+I store the valid pin sets' corresponding matrices in a list "r14Mats".
+
+There are 272 of them.
+
+```{r}
+# Create list of simul move matrices by pin state
+theList = list(UR, DR, DL, UL, U, L, D, R, dl, dr, ur, ul, BS, FS)
+
+r14Sets = data.frame()
+
+r14Mats = list()
+
+# Create list of pin state strings to test, corresponding to matrices in above list
+moveStrings = c("UR", "DR", "DL", "UL", "U", "L", "D", "R", "dl", "dr", "ur", "ul", "BS", "FS")
+
+# Create matrix such that each column is a unique combination (not permutation) of seven numbers from 1-14 inclusive. These will be used to gather move matrices to put together.
+numCombs = combn(1:14, 7)
+
+# For each set of seven numbers...
+for (column in 1:3432) {
+  # ...create a matrix of their corresponding move matrices to test.
+  thisMatrix = cbind(
+    theList[[numCombs[1,column]]],
+    theList[[numCombs[2,column]]],
+    theList[[numCombs[3,column]]],
+    theList[[numCombs[4,column]]],
+    theList[[numCombs[5,column]]],
+    theList[[numCombs[6,column]]],
+    theList[[numCombs[7,column]]]
+  )
+  
+  # If the rank of the created matrix is 14...
+  if (qr(thisMatrix)$rank == 14) {
+    # ...add the list of pin states to the pin states data frame.
+    r14Sets <- rbind(
+      r14Sets, 
+      c(
+        moveStrings[numCombs[1,column]],
+        moveStrings[numCombs[2,column]],
+        moveStrings[numCombs[3,column]],
+        moveStrings[numCombs[4,column]],
+        moveStrings[numCombs[5,column]],
+        moveStrings[numCombs[6,column]],
+        moveStrings[numCombs[7,column]]
+      )
+    )
+    
+    # ...and add the resultant matrix to the matrix list.
+    r14Mats[[length(r14Mats) + 1]] = thround(thisMatrix)
+  }
+}
+
+# Name the data frame variables.
+names(r14Sets)[1] = "Pin State 1"
+names(r14Sets)[2] = "Pin State 2"
+names(r14Sets)[3] = "Pin State 3"
+names(r14Sets)[4] = "Pin State 4"
+names(r14Sets)[5] = "Pin State 5"
+names(r14Sets)[6] = "Pin State 6"
+names(r14Sets)[7] = "Pin State 7"
+```
+
+
+
+I define a function "ordtomat" which turns a string of pin states separated by spaces into a move matrix for that pin order.
+
+```{r}
+ordtomat <- function(input) {
+  
+  return(matrix(unlist(cbind(get(strsplit(input," ")[[1]][1]),get(strsplit(input," ")[[1]][2]),get(strsplit(input," ")[[1]][3]),get(strsplit(input," ")[[1]][4]),get(strsplit(input," ")[[1]][5]),get(strsplit(input," ")[[1]][6]),get(strsplit(input," ")[[1]][7]))), ncol=14))
+  
+}
+```
+
+
+
+My proposed definition of an intuitive move is a move that aligns a front clock with another front clock such that those two clock are never again separated. Moves 13 and 14 are always intuitive as they always involve visually aligning everything to 12, and since ALL moves are not in any of the 7-simul pin sets, we will always be able to see the state of the back clocks that still need solving; we therefore need only check moves 1-12 for intuitivness.I will assume that clocks that stay together are never moved "in parallel" by different moves. I have not yet been able to justify this as true.
+
+I define a function "intFinder" that takes in a move matrix and returns a vector of the moves that are intuitive, where "n" means the front move of the "nth" simul move pair is intuitive and "-n" means the back move is. It takes in a move matrix instead of a move index because move order matters and the indexed pin sets are of a fixed (non-)order. I am unable to determine how this works or how I wrote it at all, but it has survived all testing.
+
+```{r}
+
+intFinder <- function(matOrOrder) { # Input is matrix or string of pin states.
+  
+  if(typeof(matOrOrder) == "character") {
+    
+    matOrOrder = ordtomat(matOrOrder)
+    
+  }
+  
+  pinOrderMat = matOrOrder[1:9,1:14] # Truncate matrix to only have front clocks because back cross clocks are irrelevant.
+    
+  analMat = matrix(0,9,7) # Initialize zero matrix to populate
+  
+  for (op in 1:7) {
+    analMat[1:9,op] = pinOrderMat[1:9,2*op - 1] - pinOrderMat[1:9,2*op] # Front moves 1, negative moves -1, grouped by op
+  }
+  
+  intuitives = c();
+  
+  for (op in 1:6) {
+    for (clock in 1:9) { 
+      if (analMat[clock,op] == 0) { # For every 0 entry that isn't in the final op (already intuitive)
+        for (otherClock in setdiff(1:9,clock)) {
+          if (all(analMat[otherClock,(op+1):7] == analMat[clock,(op+1):7])) {
+            intuitives[length(intuitives) + 1] = op * analMat[otherClock, op] # ...what? the fuck?
+          }
+        }
+      }
+    }
+  }
+  
+  intuitives = c(setdiff(unique(intuitives),0),c(7,-7))
+    
+  return(intuitives)
+
+}
+
+```
+
+Now we create a list of all 7-simul pin orders. We test all 7! permutations of each 7-simul pin set in our previously-generated list, a total of 1370880, for certain relevant statistics.
+
+We first create a list of 272 empty data frames for population. Each has 5040 observations (one for each permutation of the given pin set) and 17 variables for the 17 statistics we wish to evaluate.
+
+```{r}
+emptydf = as.data.frame(matrix(, nrow = 5040, ncol = 17))
+
+dflist = list()
+
+for (i in 1:272) {
+  
+  dflist[[i]] = emptydf
+  
+}
+```
+
+
+
+We then gather statistics for each of the permutations of the pin set through various calculations. This takes about six minutes on my machine.
+
+```{r}
+
+perms = permn(1:7) # Make list of permutations to access
+
+for (pinSet in 1:272) { # For each pin set index...
+  
+  thisMat = r14Mats[[pinSet]] # Get the matrix
+  
+  # thisMatInts = intFinder(thisMat) # And determine which moves are intuitive (Is this necessary???)
+  
+  for (perm in 1:5040) { # For each index permutation of the simul moves...
+    
+    thisPerm = perms[[perm]] # Get the permutation...
+    
+    thisPermedMat = thisMat[1:14,c(rbind(2*thisPerm - 1,2*thisPerm))] # And permute the matrix in that manner
+    
+    
+    intMoves = intFinder(thisPermedMat) # Intuitive move count: Find the intuitive moves
+
+    intMoves[intMoves > 0] = intMoves[intMoves > 0]*2 - 1 # Do something to them that allows them to be counted later idk
+
+    intMoves[intMoves < 0] = intMoves[intMoves < 0]*-2
+    
+    
+    matToFormat = abs(thround(solve(thisPermedMat))) # Memo length: Get inverse of move matrix
+    
+    matToFormat[matToFormat != 0] = 1 # Replace all non-zeroes with ones so each clock is a boolean
+    
+    memNums = signif(rowSums(matToFormat),0) # Get memo length for each move
+    
+    memNums[intMoves] = 0 # Replace intutive moves with 0-length for memorization
+    
+    
+    pinStateNames = (as.character(r14Sets[pinSet,1:7]))[thisPerm] # D-move count and pin change counts: Get pin state names
+    
+    pinMat = data.matrix(pindf %>% select(all_of(pinStateNames))) # Get rid of data frame fluff
+    
+    pinDiffs = pinMat[1:4,2:7] - pinMat[1:4,1:6] # Get pin changes by counting differences between adjacent pin states (GENIUS!)
+    
+    pinDs = sum(pinStateNames %in% c("U", "D", "DL", "DR", "dl", "dr")) # Count pin states in which you are forced to do a D move
+    
+    
+    dflist[[pinSet]][perm,1:7] = pinStateNames # Put pin state names into the first 7 columns of this pin order's observation line
+    
+    dflist[[pinSet]][perm,8:17] = c(pinSet, perm, min(memNums[memNums != 0]), mean(memNums[memNums != 0]), max(memNums), sum(memNums), 14 - length(intMoves), sum(pinStateNames %in% c("U", "D", "DL", "DR", "dl", "dr")), mean(colSums(abs(pinDiffs))), max(colSums(abs(pinDiffs)))) # STATS
+    
+  }
+  
+}
+
+```
+
+
+
+"That took six minutes. Fuck my life. Let's shove 'em together."
+
+I create a data frame "df" that is a combination of all the sub-data frames. The observations are all 1.3M 7-simul pin orders and the variables are pin states names and statistics.
+
+```{r}
+df = bind_rows(dflist)
+
+names(df)[1] = "Pin State 1"
+names(df)[2] = "Pin State 2"
+names(df)[3] = "Pin State 3"
+names(df)[4] = "Pin State 4"
+names(df)[5] = "Pin State 5"
+names(df)[6] = "Pin State 6"
+names(df)[7] = "Pin State 7"
+names(df)[8] = "Pin Set"
+names(df)[9] = "Permutation"
+names(df)[10] = "Minimum Memo Length"
+names(df)[11] = "Mean Memo Length"
+names(df)[12] = "Maximum Memo Length"
+names(df)[13] = "Sum of Memo Lengths"
+names(df)[14] = "Memorized Moves"
+names(df)[15] = "D Moves"
+names(df)[16] = "Mean Pin Changes / Move"
+names(df)[17] = "Max Pin Changes"
+```
+
+
+
+This last code chunk saves the full data frame, df, as a file.
+
+```{r}
+saveRDS(df, "methodsdf.rds")
+```
+
+
+
+# Functions
+
+
+
+I define a function "mat" that shows the general calculation of how far to perform each of the 14 moves in the nth pin set; for example, the first line of mat([the first one]) says to calculate the magnitude of the UR move, you evaluate 0UL + 1U - 1UR - ...
+
+A move matrix, by our construction convention, transforms vectors in move space into vectors in clock spaces, thus the inverse of a move matrix transforms vectors in clock space into vectors in move space. Transforming a clock state (column) vector by multiplying it (on the left) by an inverse move matrix therefore returns the magnitudes of the move matrix' moves that create that clock state. Because matrix transformation of a vector is simply finding the dot product of each of the matrix' rows with said vector, each row of the inverse move matrix therefore shows exactly what linear combination of the clocks calculates the magnitude of the row's corresponding move. To display this nicely, we simply put the clock names along the top and the move names next to the rows.
+
+
+
+```{r}
+mat <- function(input) {
+  
+  thisMat = ordtomat(input)
+  
+  if(qr(thisMat)$rank != 14) {
+    print("WARNING: Given pin set cannot solve all scrambles. (Rank of move matrix is not 14)")
+  }
+  # Build matrix, invert, and make into a data frame
+  thisDataFrame = as.data.frame(thround(solve( thisMat )))
+  # Label the columns
+  names(thisDataFrame) = c(
+    
+    "UL", "U", "UR", "L", "C", "R", "DL", "D", "DR", "Ub", "Lb", "Cb", "Rb", "Db"
+    
+  )
+  # Create two sets of the pin state names for this pin set, one to add apostrophes to to denote back moves
+  theseMoves1 = strsplit(input," ")[[1]]
+  theseMoves2 = strsplit(input," ")[[1]]
+  # Add apostrophes to the second set
+  for (i in 1:7) {
+    theseMoves2[i] = paste(theseMoves2[i], "'", sep="")
+  }
+  # Weave them together
+  rownames(thisDataFrame) = c(rbind(theseMoves1,theseMoves2))
+  
+  return(thisDataFrame)
+}
+```
+
+
+
+I define a function "sol" (short for solution) that shows the magnitude of each of the 14 moves in the nth pin set for a given clock state. Note that this does NOT state whether a move is intuitive.
+
+Transforming the opposite of a clock state by the inverse move matrix gives a set of moves that create the opposite of said clock state, i.e. a solution to the clock state.
+
+```{r}
+sol <- function(input, clockState) {
+  
+  if (typeof(clockState) == "character") {
+    store = input
+    input = clockState
+    clockState = store
+  }
+  
+  thisMat = ordtomat(input)
+  
+  if(qr(thisMat)$rank != 14) {
+    print("WARNING: Given pin set cannot solve all scrambles. (Rank of move matrix is not 14)")
+  }
+  # Invert the move matrix and transform the inverse of the clock state by the inverse move matrix to get a solution.
+  plainSol = as.data.frame( (t(solve(thisMat,-clockState)) + 5) %% 12 - 5)
+  # Same labeling as before.
+  theseMoves1 = strsplit(input," ")[[1]]
+  theseMoves2 = strsplit(input," ")[[1]]
+  
+  for (i in 1:7) {
+    theseMoves2[i] = paste(theseMoves2[i], "'", sep="")
+  }
+  
+  names(plainSol) = c(rbind(theseMoves1,theseMoves2))
+  
+  rownames(plainSol) = "Hours"
+  
+  return(plainSol)
+}
+```
+
+
+
+
+```{r}
+mem <- function(input) {
+  
+  # Get memorization matrix for given pin order
+  memMat = mat(input)
+  
+  # Get clock names for creating memorization strings
+  clockNames = strsplit("UL U UR L C R DL D DR Ub Lb Cb Rb Db"," ")[[1]]
+  
+  # Get which moves actually have to be presented by seeing which ones are not intuitive.
+  # Also what? The fuck?
+  toParse = setdiff(1:14,sort(abs(2*intFinder(ordtomat(input)) - 0.5) - 0.5))
+  
+  # Create character vector to populate.
+  uncat = rep("I",14)
+  
+  for(move in toParse) {
+    
+    # Get this line of the memorization matrix. Negate it so we get the moves to create the inverse scramble.
+    thisMove = -1 * as.double(memMat[move,1:14])
+    
+    roughString = ""
+    
+    for (clock in 1:14) {
+      
+      if (thisMove[clock] < 0) {
+        
+        roughString = paste(roughString, as.character(thisMove[clock]), clockNames[clock], sep="")
+        
+      }
+      
+      if (thisMove[clock] > 0) {
+        
+        roughString = paste(roughString, "+", as.character(thisMove[clock]), clockNames[clock], sep = "")
+        
+      }
+      
+    }
+    
+    roughString = gsub('1', '', roughString)
+    roughString = gsub('^\\+','',roughString)
+    roughString = gsub('-'," - ", roughString)
+    roughString = gsub("\\+"," + ", roughString)
+    
+    uncat[move] = roughString
+    
+  }
+  
+  
+  
+  return(t(matrix(uncat, ncol=7)))
+  
+}
+```
+
+
+
+```{r}
+stats <- function(input) {
+  print(mat(input))
+  
+  thisMat = matrix(unlist(gsol(input)), ncol=14)
+  
+  thisDF = as.data.frame(matrix(, nrow = 1, ncol = 15))
+  
+  
+  
+  intMoves = intFinder(input) # Intuitive move count: Find the intuitive moves
+
+  intMoves[intMoves > 0] = intMoves[intMoves > 0]*2 - 1 # Do something to them that allows them to be counted later idk
+
+  intMoves[intMoves < 0] = intMoves[intMoves < 0]*-2
+  
+  intMoves = sort(intMoves)
+  
+  
+  matToFormat = abs(thround(solve(thisMat))) # Memo length: Get inverse of move matrix
+  
+  matToFormat[matToFormat != 0] = 1 # Replace all non-zeroes with ones so each clock is a boolean
+  
+  memNums = signif(rowSums(matToFormat),0) # Get memo length for each move
+  
+  memNums[intMoves] = 0 # Replace intutive moves with 0-length for memorization
+  
+  
+  pinStateNames = strsplit(input," ")[[1]]
+  
+  pinMat = data.matrix(pindf %>% select(all_of(pinStateNames))) # Get rid of data frame fluff
+  
+  pinDiffs = pinMat[1:4,2:7] - pinMat[1:4,1:6] # Get pin changes by counting differences between adjacent pin states (GENIUS!)
+  
+  pinDs = sum(pinStateNames %in% c("U", "D", "DL", "DR", "dl", "dr")) # Count pin states in which you are forced to do a D move
+  
+  
+  thisDF[1,1:7] = pinStateNames # Put pin state names into the first 7 columns of this pin order's observation line
+  
+  thisDF[1,8:15] = c(min(memNums[memNums != 0]), mean(memNums[memNums != 0]), max(memNums), sum(memNums), 14 - length(intMoves), sum(pinStateNames %in% c("U", "D", "DL", "DR", "dl", "dr")), mean(colSums(abs(pinDiffs))), max(colSums(abs(pinDiffs)))) # STATS
+  
+  names(thisDF)[1] = "Pin State 1"
+  names(thisDF)[2] = "Pin State 2"
+  names(thisDF)[3] = "Pin State 3"
+  names(thisDF)[4] = "Pin State 4"
+  names(thisDF)[5] = "Pin State 5"
+  names(thisDF)[6] = "Pin State 6"
+  names(thisDF)[7] = "Pin State 7"
+  names(thisDF)[8] = "Min Memo Length"
+  names(thisDF)[9] = "Mean Memo Length"
+  names(thisDF)[10] = "Max Memo Length"
+  names(thisDF)[11] = "Sum of Memo Lengths"
+  names(thisDF)[12] = "Memorized Moves"
+  names(thisDF)[13] = "D Moves"
+  names(thisDF)[14] = "Mean Pin Changes / Move"
+  names(thisDF)[15] = "Max Pin Changes"
+  
+  print(mem(input))
+  
+  print(thisDF)
+}
+```
+
+
+
+PLAYGROUND
+
+UR2+ DR2+ DL2+ UL4+ U3+ R0+ D4+ L1+ ALL3- y2 U5+ R5- D4+ L2+ ALL5-
+```{r}
+testclockstate = c(10, 7, 0, 11, 3, 8, 10, 6, 2, 9, 6, 1, 11, 8)
+tommy = "dl R DR BS UL L ur"
+bpaul = "dl R DR ur L UL BS"
+
+connorClockState = c(1, 3, 4, 5, 8, 4, 10, 3, 0, 11, 7, 4, 10, 5)
+```
+
+Connor likes "ul R UR dr L DL FS": 56, 966
+UR3- DR6+ DL5- UL3- U1- R0+ D4+ L0+ ALL2- y2 U1- R3- D5+ L6+ ALL3-
+
+```{r}
+rokiState = c(10, 1, 8, 6, 3, 7, 6, 2, 2, 2, 6, 9, 8, 6)
+```
