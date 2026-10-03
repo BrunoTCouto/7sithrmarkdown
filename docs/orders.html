@@ -54,8 +54,8 @@
 
   .filters { display: grid; gap: 16px; grid-template-columns: 1fr; }
   @media (min-width: 760px) { .filters { grid-template-columns: 1.2fr 1fr; } }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-  .chip { font-family: var(--mono); font-size: 0.9rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; user-select: none; }
+  .chips { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 6px; max-width: 420px; }
+  .chip { font-family: var(--mono); font-size: 0.9rem; padding: 4px 0; text-align: center; border-radius: 999px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; user-select: none; }
   .chip.require { background: var(--intuitive); color: var(--intuitive-ink); border-color: var(--intuitive-ink); }
   .chip.exclude { background: var(--exclude); color: var(--exclude-ink); border-color: var(--exclude-ink); text-decoration: line-through; }
   .hint { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
