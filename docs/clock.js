@@ -125,6 +125,8 @@
     const result = { order: order.slice(), cols, ok, det, inv };
     if (ok) {
       result.intuitive = intuitiveMoves(cols);
+      result.alignments = intuitiveAlignments(cols);
+      result.alignText = result.alignments.map(describeAlignment);
       result.formulas = inv.map((row, i) => formatFormula(row));
       result.memoLength = inv.map((row, i) => (result.intuitive.has(i) ? 0 : row.filter((q) => !q.isZero()).length));
     }
@@ -159,6 +161,72 @@
     }
     ints.add(12); ints.add(13); // the last pin state is always intuitive: everything gets aligned to 12
     return ints;
+  }
+
+  // Groups of front clocks that are aligned together often enough to deserve a name (from newIntFinder in the notebook).
+  const BLOCKS = [
+    { name: "UL block", clocks: ["UL", "U", "L", "C"] },
+    { name: "UR block", clocks: ["U", "UR", "C", "R"] },
+    { name: "DL block", clocks: ["L", "C", "DL", "D"] },
+    { name: "DR block", clocks: ["C", "R", "D", "DR"] },
+    { name: "U block", clocks: ["UL", "U", "UR", "L", "C", "R"] },
+    { name: "L block", clocks: ["UL", "U", "L", "C", "DL", "D"] },
+    { name: "D block", clocks: ["L", "C", "R", "DL", "D", "DR"] },
+    { name: "R block", clocks: ["U", "UR", "C", "R", "D", "DR"] },
+  ];
+
+  /**
+   * Port of newIntFinder: like intuitiveMoves, but says what to align to what. Returns an array of
+   * 14 entries (one per column): null for a memorised turn, { pairs: [[moved, target], ...] } for an
+   * intuitive one (clock names), and { final: true } for the two turns of the last pin state.
+   */
+  function intuitiveAlignments(cols) {
+    const score = []; // 0 = not moved by this pin state, 1 = moved by its front turn, 2 = by its back turn
+    for (let clock = 0; clock < 9; clock++) {
+      score.push([]);
+      for (let op = 0; op < 7; op++) score[clock].push(cols[2 * op][clock] + 2 * cols[2 * op + 1][clock]);
+    }
+    const out = new Array(14).fill(null);
+    for (let op = 0; op < 6; op++) {
+      for (let still = 0; still < 9; still++) {
+        if (score[still][op] !== 0) continue;
+        for (let moving = 0; moving < 9; moving++) {
+          const s = score[moving][op];
+          if (s === 0) continue;
+          let same = true;
+          for (let op2 = op + 1; op2 < 7; op2++) if (score[moving][op2] !== score[still][op2]) { same = false; break; }
+          if (!same) continue;
+          const col = s === 1 ? 2 * op : 2 * op + 1;
+          if (!out[col]) out[col] = { pairs: [] };
+          out[col].pairs.push([CLOCKS[moving], CLOCKS[still]]);
+        }
+      }
+    }
+    out[12] = { final: true }; out[13] = { final: true };
+    return out;
+  }
+
+  /** Name a set of front clocks: "C", "U/L", or a block name when it is exactly one of the BLOCKS. */
+  function clockSetName(clocks) {
+    const set = new Set(clocks);
+    const block = BLOCKS.find((b) => b.clocks.length === set.size && b.clocks.every((c) => set.has(c)));
+    if (block) return block.name;
+    return CLOCKS.filter((c) => set.has(c)).join("/");
+  }
+
+  /** "align C to U/L", "align L block to R", "align to 12"; "" for a memorised turn. */
+  function describeAlignment(entry) {
+    if (!entry) return "";
+    if (entry.final) return "align to 12";
+    const targets = new Map(); // moved clock -> set of clocks it is aligned to
+    for (const [moved, target] of entry.pairs) {
+      if (!targets.has(moved)) targets.set(moved, new Set());
+      targets.get(moved).add(target);
+    }
+    const moved = [...targets.keys()];
+    const first = clockSetName([...targets.get(moved[0])]);
+    if (moved.every((m) => clockSetName([...targets.get(m)]) === first)) return "align " + clockSetName(moved) + " to " + first;
+    return moved.map((m) => "align " + m + " to " + clockSetName([...targets.get(m)])).join("; ");
   }
 
   /** Port of mem(): human-readable formula "UL - U + 2 Cb" for the amount of one move. */
@@ -236,6 +304,8 @@
       backIntuitive: a.intuitive.has(2 * i + 1),
       frontFormula: a.formulas[2 * i],
       backFormula: a.formulas[2 * i + 1],
+      frontAlign: a.alignText[2 * i],
+      backAlign: a.alignText[2 * i + 1],
     }));
     const result = { ok: true, steps, raw, warnings: v.warnings, det: a.det.toString(), fractional };
     if (fractional) result.reason = "This scramble has no solution with this pin order: the turns marked in red come out in thirds of an hour, which the puzzle cannot do. Pick another order.";
@@ -286,7 +356,7 @@
 
   return {
     CLOCKS, PIN_STATES, MOVES, PINS_UP, PIN_LABELS, pinLabel, pinFromLabel, Q,
-    moveMatrix, invertExact, analyse, intuitiveMoves, validateOrder, solve, applyMoves,
+    moveMatrix, invertExact, analyse, intuitiveMoves, intuitiveAlignments, describeAlignment, BLOCKS, validateOrder, solve, applyMoves,
     parseScramble, randomScramble, formatTurn, normTurn, normFrac, isFraction, formatFormula,
   };
 });

@@ -141,6 +141,7 @@
       <button data-order="dl R DR BS UL L ur">Tommy</button>
       <button data-order="dl R DR ur L UL BS">Bpaul</button>
       <button data-order="ul R UR dr L DL FS">Connor</button>
+      <button data-order="DL R L ul BS dr UR">7sh1</button>
     </div>
     <div class="msg" id="orderMsg"></div>
   </section>
@@ -156,7 +157,7 @@
       <p><strong>Pins</strong>: filled dot = pin up, seen from the front (UL UR / DL DR).</p>
       <p><strong>Front wheel</strong>: turn any wheel whose pin is <em>up</em>. <strong>Back wheel</strong>: turn any wheel whose pin is <em>down</em>. Do both without changing pins.</p>
       <p>All turns are hours as seen from the front: <code>3+</code> is three hours clockwise, <code>2-</code> two hours anticlockwise.</p>
-      <p>The small formula under each turn is what you would memorize to compute it from the scrambled faces (sum the listed clocks, then reduce to −5…6). Turns tagged <em>intuitive</em> can be done by eye: just line the clocks up.</p>
+      <p>The small formula under each turn is what you would memorize to compute it from the scrambled faces (sum the listed clocks, then reduce to −5…6). Turns tagged <em>intuitive</em> are done by eye: the text under them says which clocks to line up with which (e.g. <code>align C to U/L</code> means turn until C shows the same hour as U and L; a <em>block</em> is a group of clocks that already agree). The last pin state always just aligns everything to 12.</p>
     </details>
   </section>
 
@@ -255,14 +256,14 @@
     for (const up of pinsUp) { const s = document.createElement("span"); if (up) s.classList.add("up"); d.appendChild(s); }
     return d;
   }
-  function turnBlock(label, amount, formula, intuitive, cls) {
+  function turnBlock(label, amount, formula, intuitive, align, cls) {
     const t = document.createElement("div"); t.className = "turn " + cls;
     const what = document.createElement("div"); what.className = "what"; what.textContent = label;
     if (intuitive) { const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = "intuitive"; what.appendChild(tag); }
     const impossible = Clock.isFraction(amount);
     if (impossible) { const tag = document.createElement("span"); tag.className = "tag bad"; tag.textContent = "impossible"; what.appendChild(tag); }
     const num = document.createElement("div"); num.className = "num" + (amount === 0 ? " zero" : impossible ? " impossible" : ""); num.textContent = Clock.formatTurn(amount);
-    const f = document.createElement("div"); f.className = "formula"; f.textContent = intuitive ? "line it up by eye" : formula;
+    const f = document.createElement("div"); f.className = "formula"; f.textContent = intuitive ? align : formula;
     t.append(what, num, f); return t;
   }
 
@@ -300,8 +301,8 @@
       const row = document.createElement("div"); row.className = "step";
       const name = document.createElement("div"); name.className = "name"; name.textContent = Clock.pinLabel(st.pin);
       row.append(pinDiagram(st.pinsUp), name,
-        turnBlock("Front wheel", st.front, st.frontFormula, st.frontIntuitive, "front"),
-        turnBlock("Back wheel", st.back, st.backFormula, st.backIntuitive, "back"));
+        turnBlock("Front wheel", st.front, st.frontFormula, st.frontIntuitive, st.frontAlign, "front"),
+        turnBlock("Back wheel", st.back, st.backFormula, st.backIntuitive, st.backAlign, "back"));
       steps.appendChild(row);
       parts.push(Clock.pinLabel(st.pin) + " " + Clock.formatTurn(st.front) + "/" + Clock.formatTurn(st.back));
     }

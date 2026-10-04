@@ -123,3 +123,45 @@ test("the pages show BS as a backslash and FS as a slash", () => {
   assert.equal(Clock.pinFromLabel("/"), "FS");
   assert.deepEqual("dl R DR \\ UL L ur".split(" ").map(Clock.pinFromLabel), ORDERS.tommy);
 });
+
+test("newIntFinder port flags the same turns as intFinder and describes them", () => {
+  function* combos(arr, k, start = 0, acc = []) {
+    if (acc.length === k) { yield acc.slice(); return; }
+    for (let i = start; i < arr.length; i++) { acc.push(arr[i]); yield* combos(arr, k, i + 1, acc); acc.pop(); }
+  }
+  let seed = 5;
+  const rng = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+  const orders = [];
+  for (const set of combos(Clock.PIN_STATES, 7)) {
+    if (!Clock.invertExact(Clock.moveMatrix(set)).ok) continue;
+    orders.push(set);
+    if (rng() < 0.15) orders.push(set.slice().sort(() => rng() - 0.5));
+  }
+  assert.ok(orders.length > 300);
+  for (const order of orders) {
+    const cols = Clock.moveMatrix(order);
+    const ints = Clock.intuitiveMoves(cols);
+    const aligns = Clock.intuitiveAlignments(cols);
+    for (let c = 0; c < 14; c++) {
+      assert.equal(aligns[c] !== null, ints.has(c), "column " + c + " of " + order.join(" "));
+      const text = Clock.describeAlignment(aligns[c]);
+      if (ints.has(c)) assert.match(text, /^align /); else assert.equal(text, "");
+    }
+    assert.equal(Clock.describeAlignment(aligns[12]), "align to 12");
+    assert.equal(Clock.describeAlignment(aligns[13]), "align to 12");
+  }
+});
+
+test("alignment descriptions match the notebook's newIntFinder(tommy) examples", () => {
+  const a = Clock.analyse(ORDERS.tommy);
+  assert.equal(a.alignText[4], "align C to U/L");   // third pin state, front turn
+  assert.equal(a.alignText[5], "align UL to U/L");  // third pin state, back turn
+  assert.equal(a.alignText[10], "align L block to R"); // sixth pin state, front turn
+  assert.equal(a.alignText[12], "align to 12");
+  const sol = Clock.solve(ORDERS.tommy, TEST_STATE);
+  assert.equal(sol.steps[2].frontAlign, "align C to U/L");
+  assert.equal(sol.steps[2].backAlign, "align UL to U/L");
+  assert.equal(sol.steps[0].frontAlign, ""); // memorised turn
+  assert.equal(Clock.describeAlignment({ pairs: ["UL", "U", "L", "C", "DL", "D"].map((c) => [c, "R"]) }), "align L block to R");
+  assert.equal(Clock.describeAlignment({ pairs: [["C", "U"], ["C", "L"]] }), "align C to U/L");
+});

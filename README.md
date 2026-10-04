@@ -14,8 +14,8 @@ repository **Settings → Pages → Build and deployment → Source: Deploy from
 Branch: `main`, folder `/docs`**. The page is static and runs entirely in the browser.
 
 * Paste a WCA scramble (`UR2+ DR3- … y2 U5+ …`) or set the 14 clock dials by tapping or dragging the hands (arrow keys and digits work too). The back face shows the geared corner dials as on the real puzzle.
-* Pick a 7-simul pin order (the three from the notebook are presets; the last one you used is remembered).
-* Read off the 14 turns, each with the memo formula you would use to compute it, and which turns are intuitive.
+* Pick a 7-simul pin order (the four from the notebook, Tommy, Bpaul, Connor and 7sh1, are presets; the last one you used is remembered).
+* Read off the 14 turns, each with the memo formula you would use to compute it. Intuitive turns say what to line up instead (`align C to U/L`, `align L block to R`, `align to 12`), as worked out by the notebook's `newIntFinder`.
 * Everything on the form (scramble, the 14 faces, pin order) is kept in the URL as you change it, so the address bar is always a link to what you see; **Share link** copies it. `?scramble=UR2%2B+DR3-+…` applies a scramble, `?state=11,9,…` sets the 14 faces directly, `?order=dl+R+DR+…` preselects a pin order.
 
 ## Pin order finder
@@ -24,7 +24,7 @@ Branch: `main`, folder `/docs`**. The page is static and runs entirely in the br
 the notebook scores them (memo lengths, memorised vs. intuitive turns, D-wheel pin states, pin
 changes). Require or exclude pin states, fix the first or last one, cap any statistic, sort, and
 open an order in the solver. Rows from the four determinant ±3 sets are marked `det ±3`. The filters
-and sort live in the URL too (`?require=dl+\&exclude=/&first=dl&memorised=6&sort=memorized&dir=desc`),
+and sort live in the URL too (`?require=dl+\&exclude=/&first=dl&memorized=6&sort=memorized&dir=desc`),
 and **Share link** copies it.
 
 The numbers come from `node scripts/build-orders.js`, a port of the notebook's statistics loop,

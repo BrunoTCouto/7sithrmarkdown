@@ -135,7 +135,7 @@
             <option value="pinSum">Total pin changes</option>
             <option value="pinMax">Pins changed per step</option>
           </select></div>
-          <button id="dir" class="small" title="Toggle sort direction">ascending ↑</button>
+          <button id="dir" class="small" title="Toggle sort direction">Ascending ↑</button>
         </div>
       <div class="row">
         <button class="small" id="reset">Clear filters</button>
@@ -163,7 +163,7 @@
     <div class="row"><button id="more" hidden>Show 100 more</button></div>
     <details>
       <summary>What the columns mean</summary>
-      <p><strong>Memorized</strong>: of the 14 wheel turns, how many need a memo formula; the rest are intuitive (line two clocks up by eye).</p>
+      <p><strong>Memorized</strong>: of the 14 wheel turns, how many need a memo formula; the rest are intuitive (line clocks up by eye; expand a row to see which clocks go with which).</p>
       <p><strong>Memo</strong>: a formula's length is the number of clocks you add up to get that turn. Shorter is easier to memorize.</p>
       <p><strong>D-wheel</strong>: pin states whose front move is on a D wheel (U, D, DL, DR, dl, dr), which some people find awkward.</p>
       <p><strong>Pin changes</strong>: how many pins you flip between consecutive pin states. Fewer means faster hands.</p>
@@ -304,7 +304,11 @@
     for (const x of pinsOf("exclude")) setChip(PIN_INDEX[x], 2);
     for (const id of ["first", "last"]) { const x = Clock.pinFromLabel(p.get(id) || ""); if (x in PIN_INDEX) $(id).value = x; }
     $("hideThirds").checked = p.get("hidethirds") === "1";
-    for (const id in NUM_PARAMS) { const v = p.get(NUM_PARAMS[id]); if (v !== null && v !== "" && !isNaN(Number(v))) $(id).value = v; }
+    for (const id in NUM_PARAMS) {
+      let v = p.get(NUM_PARAMS[id]);
+      if (v === null && id === "maxMemorized") v = p.get("memorised"); // older links used the British spelling
+      if (v !== null && v !== "" && !isNaN(Number(v))) $(id).value = v;
+    }
     const sort = p.get("sort");
     if (sort && [...$("sortBy").options].some((o) => o.value === sort)) $("sortBy").value = sort;
     dirAsc = p.get("dir") !== "desc"; $("dir").textContent = dirAsc ? "Ascending ↑" : "Descending ↓";
@@ -396,7 +400,7 @@
         const d = document.createElement("div");
         const name = document.createElement("span"); name.className = "pin"; name.textContent = Clock.pinLabel(pin) + " " + side + ":";
         d.appendChild(name);
-        if (a.intuitive.has(col)) { const s = document.createElement("span"); s.className = "int"; s.textContent = "intuitive"; d.appendChild(s); }
+        if (a.intuitive.has(col)) { const s = document.createElement("span"); s.className = "int"; s.textContent = "intuitive (" + a.alignText[col] + ")"; d.appendChild(s); }
         else d.appendChild(document.createTextNode(a.formulas[col] + " (" + a.memoLength[col] + ")"));
         grid.appendChild(d);
       }
@@ -420,7 +424,7 @@
   $("reset").addEventListener("click", () => {
     for (let i = 0; i < 14; i++) setChip(i, 0);
     for (const id of ["maxMemorized", "maxMax", "maxSum", "maxMean", "maxD", "maxPinMax", "maxPinSum"]) $(id).value = "";
-    $("first").value = ""; $("last").value = ""; $("hideThirds").checked = false; $("sortBy").value = "sum"; dirAsc = true; $("dir").textContent = "ascending ↑";
+    $("first").value = ""; $("last").value = ""; $("hideThirds").checked = false; $("sortBy").value = "sum"; dirAsc = true; $("dir").textContent = "Ascending ↑";
     run();
   });
 
