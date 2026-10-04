@@ -239,6 +239,99 @@ intFinder <- function(matOrOrder) { # Input is matrix or string of pin states.
 
 ```
 
+Here is another intFinder function. This one actually tells you what to align to what.
+
+```{r}
+
+newIntFinder <- function(matOrOrder) { # Input is matrix or string of pin states.
+  
+  if(typeof(matOrOrder) == "character") {
+    
+    matOrOrder = ordtomat(matOrOrder)
+    
+  }
+  
+  clockDict = c("UL", "U", "UR", "L", "C", "R", "DL", "D", "DR") # For turning numbers into letters
+    
+  pinOrderMat = matOrOrder[1:9,1:14] # Truncate matrix to only have front clocks because back cross clocks are irrelevant.
+  
+  scoreMat = pinOrderMat[1:9,c(1,3,5,7,9,11,13)] + 2*pinOrderMat[1:9,c(2,4,6,8,10,12,14)] # Says what clocks are moved by the front or back turn
+  
+  # Corner clocks: 1 3 7 9
+  # Maybe tell the finder what kind of thing you are aligning based on what pin state it is (block? line? three?)
+  
+  # A move is intuitive if
+  # 1. There exists a clock A with a score of 0 and
+  # 2. There exists a clock B with a non-zero score such that clocks A and B match in their scores in every move
+  # We call this intuitive move "B -> A"
+  # At most 2 stationary clocks in one simul move
+  
+  # Data storage?
+  # Well, 6 by 2 for 6 pairs of moves
+  # Maybe make it 6 by 4 to have an "ALIGN" and "TO" row for each move
+  
+  results = matrix("", 4, 6)
+  
+  for (move in 1:6) { # Check each of the first 6 move pairs
+    
+    stationaries = which(scoreMat[,move] == 0) # Log which clocks aren't moving
+    
+    if ( length(stationaries) > 0 ) { # If there even are any stationary clocks
+      
+      for ( stationary in stationaries ) { # For each stationary clock...
+        
+        for ( moving in setdiff(1:9,stationaries) ) { # For each of the non-stationary clocks...
+          
+          if ( all(scoreMat[moving, (move+1):7] == scoreMat[stationary, (move+1):7]) ) { # If the score matrix matches for the moving and stationary clock after this move...
+            
+            if (scoreMat[moving,move] == 1) { # If it's a front move, add the moving and stationary clock to the top half of the results matrix in the correct column
+              
+              results[1,move] = paste(results[1,move], clockDict[moving])
+              results[2,move] = paste(results[2,move], clockDict[stationary])
+              
+            }
+            
+            if (scoreMat[moving,move] == 2) { # Same for bottom
+              
+              results[3,move] = paste(results[3,move], clockDict[moving])
+              results[4,move] = paste(results[4,move], clockDict[stationary])
+              
+            }
+            
+          }
+          
+        }
+        
+      }
+      
+    }
+    
+  }
+  
+  for (row in 1:4) { for (column in 1:6) {
+
+    results[row,column] = trimws(results[row,column], which = "left")
+
+    # results[row,column] <- switch(results[row,column],
+    #   "UL U L C"       = "UL block",
+    #   "U UR C R"       = "UR block",
+    #   "L C DL D"       = "DL block",
+    #   "C R D DR"       = "DR block",
+    #   "UL U UR L C R"   = "U block",
+    #   "UL U L C DL D"   = "L block",
+    #   "L C R DL D DR"   = "D block",
+    #   "U UR C R D DR"   = "R block",
+    #   results[row,column]             # Fallback: keeps original value if no match is found
+    # )
+
+  } }
+  
+  return(results)
+  
+}
+
+```
+
 Now we create a list of all 7-simul pin orders. We test all 7! permutations of each 7-simul pin set in our previously-generated list, a total of 1370880, for certain relevant statistics.
 
 We first create a list of 272 empty data frames for population. Each has 5040 observations (one for each permutation of the given pin set) and 17 variables for the 17 statistics we wish to evaluate.
@@ -559,6 +652,8 @@ UR2+ DR2+ DL2+ UL4+ U3+ R0+ D4+ L1+ ALL3- y2 U5+ R5- D4+ L2+ ALL5-
 testclockstate = c(10, 7, 0, 11, 3, 8, 10, 6, 2, 9, 6, 1, 11, 8)
 tommy = "dl R DR BS UL L ur"
 bpaul = "dl R DR ur L UL BS"
+connor = "ul R UR dr L DL FS"
+ssh1 = "DL R L ul BS dr UR"
 
 connorClockState = c(1, 3, 4, 5, 8, 4, 10, 3, 0, 11, 7, 4, 10, 5)
 ```
