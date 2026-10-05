@@ -36,8 +36,12 @@
   .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
   /* Desktop: scramble and pin order stacked on the left, the two faces side by side on the right. */
   @media (min-width: 900px) {
-    .grid.two { grid-template-columns: minmax(0, 1fr) 500px; align-items: start; }
+    .grid.two { grid-template-columns: minmax(0, 1fr) 500px; }
     .col { display: grid; gap: 16px; align-content: start; container-type: inline-size; }
+    /* The faces card is as tall as the left column; keep the dials centred in it. */
+    .faces-card { display: flex; flex-direction: column; }
+    .faces-card .faces { flex: 1; justify-content: center; align-items: center; align-content: center; }
+    .faces-card .msg { text-align: center; }
     @container (max-width: 430px) { .pins { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
   }
   /* Narrow: one column in reading order scramble, faces, pin order. */
