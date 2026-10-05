@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>7sith | 7-Simul Wizard</title>
 <meta name="description" content="Search and simulate all 1,370,880 Rubik's Clock 7-simul pin orders.">
+<script src="theme.js"></script>
 <style>
   :root {
     --bg: #f6f5f1; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #dcdad3;
@@ -37,6 +38,11 @@
   nav strong { color: var(--ink); }
   nav .spacer { flex: 1; }
   nav .msg { margin: 0; min-height: 0; }
+  nav .theme { position: relative; display: inline-flex; align-items: center; width: 60px; height: 28px; padding: 0; border-radius: 999px; background: var(--chip); border: 1px solid var(--line); cursor: pointer; }
+  nav .theme span { position: relative; z-index: 1; width: 50%; text-align: center; font-size: 15px; line-height: 1; opacity: 0.4; transition: opacity 0.2s; }
+  nav .theme .knob { position: absolute; z-index: 0; top: 2px; left: 2px; width: 24px; height: 24px; opacity: 1; border-radius: 50%; background: var(--card); border: 1px solid var(--line); transition: transform 0.2s; }
+  nav .theme[data-theme="dark"] .knob { transform: translateX(30px); }
+  nav .theme[data-theme="light"] .sun, nav .theme[data-theme="dark"] .moon { opacity: 1; }
   .lede { color: var(--muted); margin: 0 0 20px; }
   section.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 16px; }
   label { font-size: 0.85rem; color: var(--muted); display: block; }
@@ -91,7 +97,7 @@
 </head>
 <body>
 <main>
-  <nav><a href="index.html">Solver</a> · <strong>Pin order finder</strong><span class="spacer"></span><span class="msg" id="shareMsg"></span><button class="small" id="share" title="Copy a link to these filters and this sort">Share link</button></nav>
+  <nav><a href="index.html">Solver</a> · <strong>Pin order finder</strong><span class="spacer"></span><span class="msg" id="shareMsg"></span><button class="small" id="share" title="Copy a link to these filters and this sort">Share link</button><button class="theme" id="theme" role="switch" aria-label="Dark theme"><span class="sun">☀️</span><span class="moon">🌕</span><span class="knob"></span></button></nav>
   <h1>Clock Pin Order Finder</h1>
   <p class="lede">All 1,370,880 orderings of the 272 working 7-simul pin sets. Narrow them down, sort, and open any order in the solver.</p>
 
@@ -421,6 +427,7 @@
   $("dir").addEventListener("click", () => { dirAsc = !dirAsc; $("dir").textContent = dirAsc ? "Ascending ↑" : "Descending ↓"; run(); });
   $("more").addEventListener("click", showMore);
   $("share").addEventListener("click", share);
+  ClockTheme.mount($("theme"));
   $("reset").addEventListener("click", () => {
     for (let i = 0; i < 14; i++) setChip(i, 0);
     for (const id of ["maxMemorized", "maxMax", "maxSum", "maxMean", "maxD", "maxPinMax", "maxPinSum"]) $(id).value = "";

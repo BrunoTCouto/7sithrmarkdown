@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>7sith | 7-Simul Wizard</title>
 <meta name="description" content="Search and simulate all 1,370,880 Rubik's Clock 7-simul pin orders.">
+<script src="theme.js"></script>
 <style>
   :root {
     --bg: #f6f5f1; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #dcdad3;
@@ -94,13 +95,18 @@
   nav .spacer { flex: 1; }
   nav button { padding: 5px 10px; font-size: 0.85rem; }
   nav .msg { margin: 0; min-height: 0; }
+  nav .theme { position: relative; display: inline-flex; align-items: center; width: 60px; height: 28px; padding: 0; border-radius: 999px; background: var(--chip); border: 1px solid var(--line); cursor: pointer; }
+  nav .theme span { position: relative; z-index: 1; width: 50%; text-align: center; font-size: 15px; line-height: 1; opacity: 0.4; transition: opacity 0.2s; }
+  nav .theme .knob { position: absolute; z-index: 0; top: 2px; left: 2px; width: 24px; height: 24px; opacity: 1; border-radius: 50%; background: var(--card); border: 1px solid var(--line); transition: transform 0.2s; }
+  nav .theme[data-theme="dark"] .knob { transform: translateX(30px); }
+  nav .theme[data-theme="light"] .sun, nav .theme[data-theme="dark"] .moon { opacity: 1; }
   footer { color: var(--muted); font-size: 0.8rem; margin-top: 32px; }
   footer a { color: inherit; }
 </style>
 </head>
 <body>
 <main>
-  <nav><strong>Solver</strong> · <a href="orders.html">Pin Order Finder</a><span class="spacer"></span><span class="msg" id="shareMsg"></span><button id="share" title="Copy a link to this scramble, these faces and this pin order">Share link</button></nav>
+  <nav><strong>Solver</strong> · <a href="orders.html">Pin Order Finder</a><span class="spacer"></span><span class="msg" id="shareMsg"></span><button id="share" title="Copy a link to this scramble, these faces and this pin order">Share link</button><button class="theme" id="theme" role="switch" aria-label="Dark theme"><span class="sun">☀️</span><span class="moon">🌕</span><span class="knob"></span></button></nav>
   <h1>7sith | 7-Simul Wizard</h1>
   <p class="lede">Paste a scramble or type the clock faces, pick your seven pin states, and get the fourteen wheel turns that solve it.</p>
 
@@ -284,6 +290,7 @@
     else done(false);
   }
   $("share").addEventListener("click", share);
+  ClockTheme.mount($("theme"));
 
   function update() {
     syncUrl();
