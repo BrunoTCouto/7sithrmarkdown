@@ -34,7 +34,17 @@
   h2 { font-size: 1.05rem; margin: 0 0 12px; }
   .lede { color: var(--muted); margin: 0 0 20px; }
   .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
-  @media (min-width: 760px) { .grid.two { grid-template-columns: 1fr 1fr; } }
+  /* Desktop: scramble and pin order stacked on the left, the two faces side by side on the right. */
+  @media (min-width: 900px) {
+    .grid.two { grid-template-columns: minmax(0, 1fr) 500px; align-items: start; }
+    .col { display: grid; gap: 16px; align-content: start; container-type: inline-size; }
+    @container (max-width: 430px) { .pins { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  }
+  /* Narrow: one column in reading order scramble, faces, pin order. */
+  @media (max-width: 899px) {
+    .col { display: contents; }
+    .scramble-card { order: 1; } .faces-card { order: 2; } .pin-card { order: 3; }
+  }
   section.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
   label { font-size: 0.85rem; color: var(--muted); }
   textarea, input[type=number], select {
@@ -113,7 +123,8 @@
   <p class="lede">Paste a scramble or type the clock faces, pick your seven pin states, and get the fourteen wheel turns that solve it.</p>
 
   <div class="grid two">
-    <section class="card">
+    <div class="col">
+    <section class="card scramble-card">
       <h2>1. Scramble</h2>
       <label for="scramble">WCA notation, e.g. <code>UR2+ DR3- … y2 U5+ …</code></label>
       <textarea id="scramble" spellcheck="false" placeholder="UR3- DR4- DL3+ UL6+ U1+ R1- D5+ L2- ALL6+ y2 U3- R1- D1- L3- ALL5-"></textarea>
@@ -124,8 +135,21 @@
       </div>
       <div class="msg" id="scrambleMsg"></div>
     </section>
+  <section class="card pin-card">
+    <h2>3. Pin order</h2>
+    <div class="pins" id="pins"></div>
+    <div class="row presets">
+      <span style="color:var(--muted);font-size:0.9rem">Presets:</span>
+      <button data-order="dl R DR BS UL L ur">Tommy</button>
+      <button data-order="dl R DR ur L UL BS">Bpaul</button>
+      <button data-order="ul R UR dr L DL FS">Connor</button>
+      <button data-order="DL R L ul BS dr UR">7sh1</button>
+    </div>
+    <div class="msg" id="orderMsg"></div>
+  </section>
+    </div>
 
-    <section class="card">
+    <section class="card faces-card">
       <h2>2. Clock faces</h2>
       <div class="faces">
         <div class="face">
@@ -141,18 +165,6 @@
     </section>
   </div>
 
-  <section class="card" style="margin-top:16px">
-    <h2>3. Pin order</h2>
-    <div class="pins" id="pins"></div>
-    <div class="row presets">
-      <span style="color:var(--muted);font-size:0.9rem">Presets:</span>
-      <button data-order="dl R DR BS UL L ur">Tommy</button>
-      <button data-order="dl R DR ur L UL BS">Bpaul</button>
-      <button data-order="ul R UR dr L DL FS">Connor</button>
-      <button data-order="DL R L ul BS dr UR">7sh1</button>
-    </div>
-    <div class="msg" id="orderMsg"></div>
-  </section>
 
   <section class="card" style="margin-top:16px">
     <h2>4. Solution</h2>
