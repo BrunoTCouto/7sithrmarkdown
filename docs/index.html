@@ -13,7 +13,7 @@
     --bg: #f6f5f1; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #dcdad3;
     --accent: #1f5f8b; --accent-ink: #ffffff; --ok: #2e7d4f; --warn: #a2620b; --bad: #b3261e;
     --pin-up: #1d1d1b; --pin-down: #d7d5cd; --chip: #eef1f4; --dial: #fbf8ea; --intuitive: #e8f3ec; --intuitive-ink: #2e7d4f;
-    --radius: 12px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --radius: 0px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -122,9 +122,9 @@
 </head>
 <body>
 <main>
-  <nav><strong>Solver</strong> · <a href="orders.html">Pin Order Finder</a><span class="spacer"></span><span class="msg" id="shareMsg"></span><button id="share" title="Copy a link to this scramble, these faces and this pin order">Share link</button><button class="theme" id="theme" role="switch" aria-label="Dark theme"><span class="sun">☀️</span><span class="moon">🌕</span><span class="knob"></span></button></nav>
+  <nav><strong>Solver</strong> · <a href="orders.html">Pin Order Finder</a><span class="spacer"></span><span class="msg" id="shareMsg"></span><button id="share" title="Copy a link to this scramble, these faces and this pin order">Share link</button><button class="theme" id="theme" role="switch" aria-label="Dark theme"><span class="sun">☀</span><span class="moon">☾</span><span class="knob"></span></button></nav>
   <h1>7sith | 7-Simul Wizard</h1>
-  <p class="lede">Paste a scramble or type the clock faces, pick your seven pin states, and get the fourteen wheel turns that solve it.</p>
+  <p class="lede">Get a scramble or set the clock faces, pick your seven pin states, and get the simultaneous moves that solve it.</p>
 
   <div class="grid two">
     <div class="col">
@@ -145,8 +145,9 @@
     <div class="row presets">
       <span style="color:var(--muted);font-size:0.9rem">Presets:</span>
       <button data-order="dl R DR BS UL L ur">Tommy</button>
-      <button data-order="dl R DR ur L UL BS">Bpaul</button>
-      <button data-order="ul R UR dr L DL FS">Connor</button>
+      <button data-order="dl R DR ur L UL BS">bpaul</button>
+      <button data-order="ul R UR dr L DL FS">Poto</button>
+      <button data-order="UR R ul FS DL L dr">MDv2</button>
       <button data-order="DL R L ul BS dr UR">7sh1</button>
     </div>
     <div class="msg" id="orderMsg"></div>
@@ -154,14 +155,14 @@
     </div>
 
     <section class="card faces-card">
-      <h2>2. Clock faces</h2>
+      <h2>2. Clock state</h2>
       <div class="faces">
         <div class="face">
-          <div class="title">Front (as you look at it)</div>
+          <div class="title">Front</div>
           <div class="clockgrid" id="front"></div>
         </div>
         <div class="face">
-          <div class="title">Back (flip the puzzle over, y2)</div>
+          <div class="title">Back (y2, 12 top)</div>
           <div class="clockgrid" id="back"></div>
         </div>
       </div>
@@ -169,6 +170,7 @@
     </section>
   </div>
 
+  <hr />
 
   <section class="card" style="margin-top:16px">
     <h2>4. Solution</h2>
