@@ -10,25 +10,25 @@
 <script src="theme.js"></script>
 <style>
   :root {
-    --bg: #f6f5f1; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #dcdad3;
+    --bg: #f0f0f5; --card: #ffffff; --ink: #1d1d1b; --muted: #66666b; --line: #797980;
     --accent: #1f5f8b; --accent-ink: #ffffff; --ok: #2e7d4f; --warn: #a2620b; --bad: #b3261e;
-    --pin-up: #1d1d1b; --pin-down: #d7d5cd; --chip: #eef1f4; --dial: #fbf8ea; --intuitive: #e8f3ec; --intuitive-ink: #2e7d4f;
+    --pin-up: #1d1d1b; --pin-down: #cbcbd6; --chip: #f0f0f5; --dial: #e8e8fa; --intuitive: #e8f3ec; --intuitive-ink: #2e7d4f;
     --radius: 0px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #343537;
+      --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #6d6f73;
       --accent: #6fb1e0; --accent-ink: #0f1a22; --ok: #6cc38f; --warn: #e0a24a; --bad: #ef7a73;
       --pin-up: #ecebe6; --pin-down: #3b3c3e; --chip: #2a2c2e; --dial: #26272a; --intuitive: #1d3327; --intuitive-ink: #8fd4ab;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #343537;
+    --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #6d6f73;
     --accent: #6fb1e0; --accent-ink: #0f1a22; --ok: #6cc38f; --warn: #e0a24a; --bad: #ef7a73;
     --pin-up: #ecebe6; --pin-down: #3b3c3e; --chip: #2a2c2e; --dial: #26272a; --intuitive: #1d3327; --intuitive-ink: #8fd4ab;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Times New Roman", Times, serif; }
   main { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
   h1 { font-size: 1.6rem; margin: 0 0 4px; }
   h2 { font-size: 1.05rem; margin: 0 0 12px; }
@@ -122,14 +122,14 @@
 </head>
 <body>
 <main>
-  <nav><strong>Solver</strong> · <a href="orders.html">Pin Order Finder</a><span class="spacer"></span><span class="msg" id="shareMsg"></span><button id="share" title="Copy a link to this scramble, these faces and this pin order">Share link</button><button class="theme" id="theme" role="switch" aria-label="Dark theme"><span class="sun">☀</span><span class="moon">☾</span><span class="knob"></span></button></nav>
+  <nav><strong>Solver</strong> · <a href="orders.html">Pin Order Finder</a><span class="spacer"></span><span class="msg" id="shareMsg"></span><button id="share" title="Copy a link to this scramble, clock state, and pin order">Copy link</button><button class="theme" id="theme" role="switch" aria-label="Dark theme"><span class="sun">☀</span><span class="moon">☾</span><span class="knob"></span></button></nav>
   <h1>7sith | 7-Simul Wizard</h1>
   <p class="lede">Get a scramble or set the clock faces, pick your seven pin states, and get the simultaneous moves that solve it.</p>
 
   <div class="grid two">
     <div class="col">
     <section class="card scramble-card">
-      <h2>1. Scramble</h2>
+      <h2>Scramble</h2>
       <label for="scramble">WCA notation, e.g. <code>UR2+ DR3- … y2 U5+ …</code></label>
       <textarea id="scramble" spellcheck="false" placeholder="UR3- DR4- DL3+ UL6+ U1+ R1- D5+ L2- ALL6+ y2 U3- R1- D1- L3- ALL5-"></textarea>
       <div class="row">
@@ -140,7 +140,7 @@
       <div class="msg" id="scrambleMsg"></div>
     </section>
   <section class="card pin-card">
-    <h2>3. Pin order</h2>
+    <h2>Pin order</h2>
     <div class="pins" id="pins"></div>
     <div class="row presets">
       <span style="color:var(--muted);font-size:0.9rem">Presets:</span>
@@ -155,7 +155,7 @@
     </div>
 
     <section class="card faces-card">
-      <h2>2. Clock state</h2>
+      <h2 style="text-align: center;">Clock state</h2>
       <div class="faces">
         <div class="face">
           <div class="title">Front</div>
@@ -173,7 +173,7 @@
   <hr />
 
   <section class="card" style="margin-top:16px">
-    <h2>4. Solution</h2>
+    <h2>Solution</h2>
     <div class="steps" id="steps"></div>
     <div class="summary" id="summary"></div>
     <div class="stats" id="stats"></div>
@@ -328,8 +328,8 @@
       const row = document.createElement("div"); row.className = "step";
       const name = document.createElement("div"); name.className = "name"; name.textContent = Clock.pinLabel(st.pin);
       row.append(pinDiagram(st.pinsUp), name,
-        turnBlock("Front wheel", st.front, st.frontFormula, st.frontIntuitive, st.frontAlign, "front"),
-        turnBlock("Back wheel", st.back, st.backFormula, st.backIntuitive, st.backAlign, "back"));
+        turnBlock("Front move", st.front, st.frontFormula, st.frontIntuitive, st.frontAlign, "front"),
+        turnBlock("Back move", st.back, st.backFormula, st.backIntuitive, st.backAlign, "back"));
       steps.appendChild(row);
       parts.push(Clock.pinLabel(st.pin) + " " + Clock.formatTurn(st.front) + "/" + Clock.formatTurn(st.back));
     }
