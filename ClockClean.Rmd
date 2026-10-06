@@ -617,11 +617,11 @@ memx2 <- function(input) {
     
     # Check if the sum of coefficients is even. If it isn't, we change the reading of the final corner in the memo string to the back version and negate its coefficient. This brings back the sum of coefficients to even-ness.
     
-    if(abs(sum(round(thisMove)) %% 2) > 0.1) {
+    if(sum(round(thisMove[10:14])) %% 2 != 0) {
     
-      lastCorner = str_extract(roughString,"(UL|UR|DL|DR)(?!.*(?:UL|UR|DL|DR))")
+      lastCorner = str_extract(roughString,"(?<=[13579])(?:UL|UR|DL|DR)(?!.*(?<=[13579])(?:UL|UR|DL|DR))")
       
-      lastCornerLocation = str_locate(roughString, "(UL|UR|DL|DR)(?!.*(?:UL|UR|DL|DR))")[1]
+      lastCornerLocation = str_locate(roughString, "(?<=[13579])(?:UL|UR|DL|DR)(?!.*(?<=[13579])(?:UL|UR|DL|DR))")[1]
       
       # If we flipped a "+" to a "-", say we did so.
       flipped = FALSE
@@ -646,25 +646,25 @@ memx2 <- function(input) {
       
       if(lastCorner == "UL") {
         
-        roughString = gsub("(UL|UR|DL|DR)(?!.*(?:UL|UR|DL|DR))", "DLb", roughString, perl = TRUE)
+        roughString = gsub("(?<=[13579])(?:UL|UR|DL|DR)(?!.*(?<=[13579])(?:UL|UR|DL|DR))", "DLb", roughString, perl = TRUE)
         
       }
       
       if(lastCorner == "UR") {
         
-        roughString = gsub("(UL|UR|DL|DR)(?!.*(?:UL|UR|DL|DR))", "DRb", roughString, perl = TRUE)
+        roughString = gsub("(?<=[13579])(?:UL|UR|DL|DR)(?!.*(?<=[13579])(?:UL|UR|DL|DR))", "DRb", roughString, perl = TRUE)
         
       }
       
       if(lastCorner == "DL") {
         
-        roughString = gsub("(UL|UR|DL|DR)(?!.*(?:UL|UR|DL|DR))", "ULb", roughString, perl = TRUE)
+        roughString = gsub("(?<=[13579])(?:UL|UR|DL|DR)(?!.*(?<=[13579])(?:UL|UR|DL|DR))", "ULb", roughString, perl = TRUE)
         
       }
       
       if(lastCorner == "DR") {
         
-        roughString = gsub("(UL|UR|DL|DR)(?!.*(?:UL|UR|DL|DR))", "URb", roughString, perl = TRUE)
+        roughString = gsub("(?<=[13579])(?:UL|UR|DL|DR)(?!.*(?<=[13579])(?:UL|UR|DL|DR))", "URb", roughString, perl = TRUE)
         
       }
     
