@@ -281,6 +281,11 @@
         s = s.replace(new RegExp(X2_ODD_CORNER.source, "g"), X2_TWIN[lastCorner]);
       }
     }
+    // Chris: keep the "b" clocks together, so the solver turns the clock over once. Front clocks first, then the
+    // corner read on the back (if any), then the back clocks, each group in its original order.
+    const toks = s.match(/[+-]\d+[A-Za-z]+/g) || [];
+    const isTwin = (t) => /[UD][LR]b$/.test(t), isBack = (t) => !isTwin(t) && /(?:Ub|Lb|Cb|Rb|Db)$/.test(t);
+    s = toks.filter((t) => !isTwin(t) && !isBack(t)).concat(toks.filter(isTwin), toks.filter(isBack)).join("");
     // in x2 mode Lb and Rb swap, as do Ub and Db; the "p" keeps the next replacement from undoing the previous one
     s = s.replace(/(?<![DU])Lb(?!p)/g, "Rbp").replace(/(?<![DU])Rb(?!p)/g, "Lbp").replace(/Ub(?!p)/g, "Dbp").replace(/Db(?!p)/g, "Ubp").replace(/p/g, "");
     // space nicely, remove coefficient 1s, remove leading +

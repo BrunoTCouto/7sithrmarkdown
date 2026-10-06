@@ -233,8 +233,14 @@ test("x2 memo formulas (port of memx2) are right when the back is read upside do
 test("x2 formulas for Tommy's order match the notebook's memx2 output", () => {
   const a = Clock.analyse(ORDERS.tommy);
   const got = a.inv.map((row, col) => (a.intuitive.has(col) ? null : a.formulasX2[col].text)).filter(Boolean);
-  assert.deepEqual(got, ["U + DRb - L - Rb", "- Db + Cb", "Db - Rb", "- U + UR + C + DL - D + Rb + Lb", "UL - L - R - URb + Db - Cb + Ub"]);
+  // memx2's terms, with the "b" clocks moved after the front clocks (Chris's request), e.g. "U + DRb - L - Rb" -> "U - L + DRb - Rb"
+  assert.deepEqual(got, ["U - L + DRb - Rb", "- Db + Cb", "Db - Rb", "- U + UR + C + DL - D + Rb + Lb", "UL - L - R - URb + Db - Cb + Ub"]);
+  for (const f of a.formulasX2) { // every x2 formula: no "b" clock before a front clock
+    const names = [...f.text.matchAll(/[A-Za-z]+/g)].map((m) => m[0]);
+    const firstB = names.findIndex((n) => n.endsWith("b"));
+    if (firstB >= 0) assert.ok(names.slice(firstB).every((n) => n.endsWith("b")), f.text);
+  }
   const sol = Clock.solve(ORDERS.tommy, TEST_STATE);
-  assert.equal(sol.steps[0].frontFormulaX2, "U + DRb - L - Rb");
+  assert.equal(sol.steps[0].frontFormulaX2, "U - L + DRb - Rb");
   assert.equal(sol.steps[0].frontX2Exact, true);
 });

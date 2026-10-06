@@ -110,6 +110,12 @@
   .tag.bad { background: var(--exclude, #f8e5e3); color: var(--bad); }
   .formula .dagger { color: var(--warn); cursor: help; margin-left: 2px; }
   .formula .memo { opacity: 0.75; }
+  /* clocks on the back get a soft chip; a corner read on the back (x2 mode) gets the accent colour */
+  .formula .b { background: var(--chip); border: 1px solid var(--line); border-radius: 4px; padding: 0 3px; }
+  .formula .twin { color: var(--accent); border-color: var(--accent); cursor: help; }
+  .steps.animate .step { animation: fadeUp 0.35s ease both; animation-delay: calc(var(--i, 0) * 45ms); }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .steps.animate .step { animation: none; } }
   .turn .what { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
   .turn .formula { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); word-break: break-word; }
   .tag { display: inline-block; font-size: 0.7rem; padding: 1px 6px; border-radius: 999px; background: var(--intuitive); color: var(--intuitive-ink); margin-left: 4px; vertical-align: middle; }
@@ -318,6 +324,19 @@
     for (const up of pinsUp) { const s = document.createElement("span"); if (up) s.classList.add("up"); d.appendChild(s); }
     return d;
   }
+  const TWIN_NAMES = { DLb: "UL", DRb: "UR", ULb: "DL", URb: "DR" };
+  // Render a formula with its back-side clocks marked; a corner read on the back says which corner it is.
+  function renderFormula(el, text) {
+    el.textContent = "";
+    for (const part of text.split(/(\s+)/)) {
+      const name = part.match(/[A-Za-z]+$/);
+      if (name && name[0].endsWith("b")) {
+        const sp = document.createElement("span"); sp.className = "b" + (TWIN_NAMES[name[0]] ? " twin" : ""); sp.textContent = part;
+        if (TWIN_NAMES[name[0]]) sp.title = "The " + TWIN_NAMES[name[0]] + " corner, read on the back (upside down)";
+        el.appendChild(sp);
+      } else el.appendChild(document.createTextNode(part));
+    }
+  }
   function tag(cls, text, title) { const t = document.createElement("span"); t.className = "tag" + (cls ? " " + cls : ""); t.textContent = text; if (title) t.title = title; return t; }
   // One wheel turn: side is "front" or "back", i is the pin state's position (0-6).
   function turnBlock(label, side, st, i) {
@@ -330,8 +349,11 @@
     if (impossible) what.appendChild(tag("bad", "impossible"));
     const num = document.createElement("div"); num.className = "num" + (amount === 0 ? " zero" : impossible ? " impossible" : ""); num.textContent = Clock.formatTurn(amount);
     const f = document.createElement("div"); f.className = "formula";
-    if (!intuitive) f.textContent = formula;
-    else { f.textContent = align; if (i < 6) { const m = document.createElement("span"); m.className = "memo"; m.textContent = " (" + formula + ")"; f.appendChild(m); } }
+    if (!intuitive) renderFormula(f, formula);
+    else {
+      f.textContent = align;
+      if (i < 6) { const m = document.createElement("span"); m.className = "memo"; renderFormula(m, formula); m.prepend(" ("); m.append(")"); f.appendChild(m); }
+    }
     if (x2 && !st[side + "X2Exact"] && (!intuitive || i < 6)) { // thirds: see the note under the pin order
       const d = document.createElement("span"); d.className = "dagger"; d.textContent = "†"; d.title = X2_THIRDS_NOTE; f.appendChild(d);
     }
@@ -377,6 +399,7 @@
       const row = document.createElement("div"); row.className = "step";
       const name = document.createElement("div"); name.className = "name"; name.textContent = Clock.pinLabel(st.pin);
       const i = sol.steps.indexOf(st);
+      row.style.setProperty("--i", i);
       row.append(pinDiagram(st.pinsUp), name, turnBlock("Front move", "front", st, i), turnBlock("Back move", "back", st, i));
       steps.appendChild(row);
       parts.push(Clock.pinLabel(st.pin) + " " + Clock.formatTurn(st.front) + "/" + Clock.formatTurn(st.back));
@@ -435,7 +458,9 @@
   $("x2").addEventListener("click", () => {
     x2 = !x2;
     try { localStorage.setItem("clock7.x2", x2 ? "1" : "0"); } catch (e) {}
-    renderX2(); update();
+    renderX2();
+    const steps = $("steps"); steps.classList.remove("animate"); void steps.offsetWidth; steps.classList.add("animate"); // restart the stagger
+    update();
   });
   $("x2Lbl").addEventListener("click", () => $("x2").click());
   for (const b of document.querySelectorAll(".presets button")) b.addEventListener("click", () => { setOrder(b.dataset.order.split(" ")); update(); });
