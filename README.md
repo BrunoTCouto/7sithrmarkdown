@@ -50,7 +50,9 @@ the `BS`/`FS` names, and `?order=` accepts either spelling.
 | `ClockClean.Rmd` | Original R notebook (derivation, method statistics) |
 | `docs/clock.js` | Solver core in plain JavaScript: move matrices, exact rational inverse, intuitive-move finder, memo formulas, scramble parser |
 | `docs/index.html` | The web page |
-| `docs/theme.js` | ☀️/🌕 theme switch shared by both pages (follows the system theme until you pick one) |
+| `docs/theme.js` | ☀/☾ theme switch shared by both pages (follows the system theme until you pick one) |
+| `docs/xp-theme.css`, `docs/xp-desktop.js` | Windows XP look: desktop, taskbar with Start menu and tray clock, window title-bar buttons, "Royale Noir" dark variant |
+| `docs/vendor/xp/` | [XP.css](https://github.com/botoxparty/XP.css) 0.2.6 and its fonts, vendored (MIT) |
 | `docs/orders.html` | Pin order finder: filters and sorts the 1.37M scored orders in the browser |
 | `docs/data/orders/` | The scored orders as CSV, one file per pin set |
 | `scripts/build-orders.js` | Generates `docs/data/orders/` (port of the notebook's statistics loop) |

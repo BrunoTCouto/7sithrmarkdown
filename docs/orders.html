@@ -3,186 +3,195 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>7sith | 7-Simul Wizard</title>
+<title>7sith | Pin Order Finder</title>
 <meta name="description" content="Search and simulate all 1,370,880 Rubik's Clock 7-simul pin orders.">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="favicon.png">
 <script src="theme.js"></script>
+<link rel="stylesheet" href="vendor/xp/XP.css">
+<link rel="stylesheet" href="xp-theme.css">
 <style>
-  :root {
-    --bg: #f0f0f5; --card: #ffffff; --ink: #1d1d1b; --muted: #66666b; --line: #797980;
-    --accent: #1f5f8b; --accent-ink: #ffffff; --ok: #2e7d4f; --warn: #a2620b; --bad: #b3261e;
-    --pin-up: #1d1d1b; --pin-down: #cbcbd6; --chip: #f0f0f5; --intuitive: #e8f3ec; --intuitive-ink: #2e7d4f;
-    --exclude: #f8e5e3; --exclude-ink: #b3261e;
-    --radius: 0px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #6d6f73;
-      --accent: #6fb1e0; --accent-ink: #0f1a22; --ok: #6cc38f; --warn: #e0a24a; --bad: #ef7a73;
-      --pin-up: #ecebe6; --pin-down: #3b3c3e; --chip: #2a2c2e; --intuitive: #1d3327; --intuitive-ink: #8fd4ab;
-      --exclude: #3a2322; --exclude-ink: #ef7a73;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #6d6f73;
-    --accent: #6fb1e0; --accent-ink: #0f1a22; --ok: #6cc38f; --warn: #e0a24a; --bad: #ef7a73;
-    --pin-up: #ecebe6; --pin-down: #3b3c3e; --chip: #2a2c2e; --intuitive: #1d3327; --intuitive-ink: #8fd4ab;
-    --exclude: #3a2322; --exclude-ink: #ef7a73;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Times New Roman", Times, serif; }
-  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
-  h1 { font-size: 1.6rem; margin: 0 0 4px; }
-  h2 { font-size: 1.05rem; margin: 0 0 12px; }
-  nav { font-size: 0.9rem; color: var(--muted); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  nav a { color: var(--accent); }
-  nav strong { color: var(--ink); }
-  nav .spacer { flex: 1; }
-  nav .msg { margin: 0; min-height: 0; }
-  nav .theme { position: relative; display: inline-flex; align-items: center; width: 60px; height: 28px; padding: 0; border-radius: 999px; background: var(--chip); border: 1px solid var(--line); cursor: pointer; }
-  nav .theme span { position: relative; z-index: 1; width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 15px; line-height: 1; opacity: 0.4; transition: opacity 0.2s; }
-  nav .theme .knob { position: absolute; z-index: 0; top: 50%; left: 2px; width: 25px; height: 25px; opacity: 1; border-radius: 50%; background: var(--card); border: 1px solid var(--line); transform: translate(0, -50%); transition: transform 0.2s; }
-  nav .theme[data-theme="dark"] .knob { transform: translate(29px, -50%); }
-  nav .theme[data-theme="light"] .sun, nav .theme[data-theme="dark"] .moon { opacity: 1; }
-  .lede { color: var(--muted); margin: 0 0 20px; }
-  section.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 16px; }
-  label { font-size: 0.85rem; color: var(--muted); display: block; }
-  input[type=number], select {
-    font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; width: 100%;
-  }
-  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
-  button { font: inherit; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); padding: 8px 14px; cursor: pointer; }
-  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-  button:hover { filter: brightness(0.96); }
-  button.small { padding: 5px 10px; font-size: 0.85rem; }
-  .msg { font-size: 0.9rem; margin-top: 8px; min-height: 1.2em; }
-  .msg.bad { color: var(--bad); } .msg.warn { color: var(--warn); } .msg.ok { color: var(--ok); }
+  /* layout only; the look comes from vendor/xp/XP.css + xp-theme.css */
+  .window + .window { margin-top: 14px; }
+  .filters { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .filters { grid-template-columns: 1.1fr 1fr; } }
+  .chips { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; max-width: 440px; }
+  .chip { font-family: var(--mono); font-size: 12px; padding: 3px 0; text-align: center; border: 1px solid var(--btn-border); border-radius: 3px; background: var(--btn-grad); color: var(--btn-ink); cursor: pointer; user-select: none; }
+  .chip:hover { box-shadow: inset -1px 1px #fff0cf, inset 1px 2px #fdd889, inset -2px 2px #fbc761, inset 2px -2px #e5a01a; }
+  .chip.require { background: linear-gradient(180deg, #d9f0dc, #a9d6b0); border-color: var(--intuitive-ink); color: #0d4d20; box-shadow: inset 1px 1px 3px rgba(0,0,0,0.3); font-weight: bold; }
+  .chip.exclude { background: linear-gradient(180deg, #f8d9d5, #e9a8a0); border-color: var(--exclude-ink); color: #7a1a10; text-decoration: line-through; box-shadow: inset 1px 1px 3px rgba(0,0,0,0.3); }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .pos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin-top: 10px; }
+  .pos select { width: 100%; }
+  .nums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; }
+  .sortrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+  .sortrow select { width: 100%; }
+  .field-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+  .field-row label { display: inline-flex; }
 
-  .progress { height: 6px; background: var(--chip); border-radius: 999px; overflow: hidden; margin-top: 8px; }
-  .progress div { height: 100%; width: 0; background: var(--accent); transition: width 0.2s; }
-
-  .filters { display: grid; gap: 16px; grid-template-columns: 1fr; }
-  @media (min-width: 760px) { .filters { grid-template-columns: 1.2fr 1fr; } }
-  .chips { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 6px; max-width: 420px; }
-  .chip { font-family: var(--mono); font-size: 0.9rem; padding: 4px 0; text-align: center; border-radius: 999px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; user-select: none; }
-  .chip.require { background: var(--intuitive); color: var(--intuitive-ink); border-color: var(--intuitive-ink); }
-  .chip.exclude { background: var(--exclude); color: var(--exclude-ink); border-color: var(--exclude-ink); text-decoration: line-through; }
-  .hint { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
-  .nums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
-  .pos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin-top: 12px; }
-  .check { display: flex; gap: 8px; align-items: center; font-size: 0.9rem; margin-top: 12px; }
-  .check input { width: auto; }
-  .sortrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; margin-top: 12px; }
-
-  .count { font-size: 0.95rem; margin: 0 0 8px; }
-  .count strong { font-variant-numeric: tabular-nums; }
-  .tablewrap { overflow-x: auto; }
-  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
-  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
-  th { color: var(--muted); font-weight: 500; font-size: 0.8rem; position: sticky; top: 0; background: var(--card); }
+  .tablewrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  th, td { text-align: left; padding: 5px 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  th { position: sticky; top: 0; font-weight: normal; color: var(--ink); background: var(--btn-grad); border-right: 1px solid var(--fieldset-border); border-bottom: 1px solid var(--line); }
+  td { border-bottom: 1px solid var(--fieldset-border); }
   th.num, td.num { text-align: right; }
-  td.order { font-family: var(--mono); font-weight: 600; cursor: pointer; }
-  tr.main:hover td { background: var(--chip); }
-  tr.detail td { white-space: normal; background: var(--chip); padding: 10px 12px; }
-  .formulas { display: grid; gap: 4px 16px; grid-template-columns: 1fr; font-family: var(--mono); font-size: 0.8rem; }
+  td.order { font-family: var(--mono); font-weight: bold; cursor: pointer; }
+  tr.main:hover td { background: #e8f0fb; }
+  :root[data-theme="dark"] tr.main:hover td { background: #2f3a4e; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) tr.main:hover td { background: #2f3a4e; } }
+  tr.detail td { white-space: normal; background: var(--chip); padding: 8px 12px; }
+  .formulas { display: grid; gap: 3px 16px; grid-template-columns: 1fr; font-family: var(--mono); font-size: 11px; }
   @media (min-width: 760px) { .formulas { grid-template-columns: 1fr 1fr; } }
-  .formulas .pin { font-weight: 600; margin-right: 4px; }
+  .formulas .pin { font-weight: bold; margin-right: 4px; }
   .formulas .int { color: var(--intuitive-ink); }
-  .badge { display: inline-block; font-size: 0.7rem; padding: 1px 6px; border-radius: 999px; background: var(--exclude); color: var(--exclude-ink); margin-left: 6px; vertical-align: middle; }
-  .muted { color: var(--muted); }
+  .badge { display: inline-block; font-size: 10px; padding: 0 5px; border: 1px solid var(--exclude-ink); background: var(--exclude); color: var(--exclude-ink); margin-left: 6px; vertical-align: middle; }
   .detail-actions { margin-top: 8px; }
-  .detail-actions a { color: var(--accent); }
-  footer { color: var(--muted); font-size: 0.8rem; margin-top: 32px; }
-  footer a { color: inherit; }
+  .detail-actions a { display: inline-block; font-family: var(--ui); font-size: 12px; color: var(--btn-ink); text-decoration: none; background: var(--btn-grad); border: 1px solid var(--btn-border); border-radius: 3px; padding: 3px 12px; }
+  .detail-actions a:hover { box-shadow: inset -1px 1px #fff0cf, inset 1px 2px #fdd889, inset -2px 2px #fbc761, inset 2px -2px #e5a01a; }
+  .count { font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
-<main>
-  <nav><a href="index.html">Solver</a> · <strong>Pin order finder</strong><span class="spacer"></span><span class="msg" id="shareMsg"></span><button class="small" id="share" title="Copy a link to these filters and this sort">Copy link</button><button class="theme" id="theme" role="switch" aria-label="Dark theme"><span class="sun">☀</span><span class="moon">☾</span><span class="knob"></span></button></nav>
-  <h1>Clock Pin Order Finder</h1>
+<main class="desktop">
+  <h1 class="desk-title"><span class="glyph" style="font-size:22px">🔍</span>Clock Pin Order Finder</h1>
   <p class="lede">All 1,370,880 orderings of the 272 working 7-simul pin sets. Narrow them down, sort, and open any order in the solver.</p>
 
-  <section class="card" id="loading">
-    <h2>Loading the database</h2>
-    <div class="msg" id="loadMsg">Fetching 272 pin-set files…</div>
-    <div class="progress"><div id="bar"></div></div>
-  </section>
+  <div class="window" id="loading" data-win="Loading">
+    <div class="title-bar"><div class="title-bar-text"><img class="ico" src="favicon.png" alt="">Loading the database</div><div class="title-bar-controls"><button aria-label="Minimize" title="Minimize"></button><button aria-label="Maximize" title="Maximize"></button><button aria-label="Close" title="Close"></button></div></div>
+    <div class="window-body">
+      <p class="msg" id="loadMsg" style="margin:0 0 8px">Fetching 272 pin-set files…</p>
+      <progress id="bar" max="272" value="0"></progress>
+    </div>
+  </div>
 
-  <section class="card" id="filtersCard" hidden>
-    <h2>Filters</h2>
-    <div class="filters">
-      <div>
-        <label>Required/Excluded pin states</label>
-        <div class="chips" id="chips"></div>
-        <div class="hint">Click once to require a pin state, twice to exclude it, again to clear.</div>
-        <div class="pos">
-          <div><label for="first">First pin state</label><select id="first"></select></div>
-          <div><label for="last">Last pin state</label><select id="last"></select></div>
+  <div class="window" id="filtersCard" data-win="Filters" hidden>
+    <div class="title-bar"><div class="title-bar-text"><span class="glyph">🔍</span>Filters</div><div class="title-bar-controls"><button aria-label="Minimize" title="Minimize"></button><button aria-label="Maximize" title="Maximize"></button><button aria-label="Close" title="Close"></button></div></div>
+    <div class="window-body">
+      <div class="filters">
+        <div>
+          <fieldset>
+            <legend>Pin states</legend>
+            <div class="chips" id="chips"></div>
+            <div class="hint">Click once to require a pin state, twice to exclude it, again to clear.</div>
+            <div class="pos">
+              <div class="field-row-stacked"><label for="first">First pin state</label><select id="first"></select></div>
+              <div class="field-row-stacked"><label for="last">Last pin state</label><select id="last"></select></div>
+            </div>
+            <div class="field-row">
+              <input type="checkbox" id="hideThirds">
+              <label for="hideThirds">Hide the 4 pin sets with determinant ±3 (marked <span class="badge">det ±3</span>; they only solve 1 in 3 scrambles)</label>
+            </div>
+          </fieldset>
         </div>
-        <label class="check"><input type="checkbox" id="hideThirds"> <span>Hide the 4 pin sets with determinant ±3 (marked <span class="badge">det ±3</span>; they only solve 1 in 3 scrambles)</span></label>
-      </div>
-      <div>
-        <div class="nums">
-          <div><label for="maxMemorized">Memorized turns ≤</label><input type="number" id="maxMemorized" min="0" max="14" placeholder="any"></div>
-          <div><label for="maxMax">Longest single memo ≤</label><input type="number" id="maxMax" min="0" max="14" placeholder="any"></div>
-          <div><label for="maxSum">Total memo length ≤</label><input type="number" id="maxSum" min="0" max="200" placeholder="any"></div>
-          <div><label for="maxMean">Mean memo length ≤</label><input type="number" id="maxMean" min="0" max="14" step="0.1" placeholder="any"></div>
-          <div><label for="maxD">D-moves ≤</label><input type="number" id="maxD" min="0" max="7" placeholder="any"></div>
-          <div><label for="maxPinMax">Pins changed per step ≤</label><input type="number" id="maxPinMax" min="0" max="4" placeholder="any"></div>
-          <div><label for="maxPinSum">Total pin changes ≤</label><input type="number" id="maxPinSum" min="0" max="24" placeholder="any"></div>
+        <div>
+          <fieldset>
+            <legend>Limits</legend>
+            <div class="nums">
+              <div class="field-row-stacked"><label for="maxMemorized">Memorized turns ≤</label><input type="number" id="maxMemorized" min="0" max="14" placeholder="any"></div>
+              <div class="field-row-stacked"><label for="maxMax">Longest single memo ≤</label><input type="number" id="maxMax" min="0" max="14" placeholder="any"></div>
+              <div class="field-row-stacked"><label for="maxSum">Total memo length ≤</label><input type="number" id="maxSum" min="0" max="200" placeholder="any"></div>
+              <div class="field-row-stacked"><label for="maxMean">Mean memo length ≤</label><input type="number" id="maxMean" min="0" max="14" step="0.1" placeholder="any"></div>
+              <div class="field-row-stacked"><label for="maxD">D-moves ≤</label><input type="number" id="maxD" min="0" max="7" placeholder="any"></div>
+              <div class="field-row-stacked"><label for="maxPinMax">Pins changed per step ≤</label><input type="number" id="maxPinMax" min="0" max="4" placeholder="any"></div>
+              <div class="field-row-stacked"><label for="maxPinSum">Total pin changes ≤</label><input type="number" id="maxPinSum" min="0" max="24" placeholder="any"></div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Sort</legend>
+            <div class="sortrow">
+              <div class="field-row-stacked"><label for="sortBy">Sort by</label><select id="sortBy">
+                <option value="sum">Total memo length</option>
+                <option value="memorized">Memorized turns</option>
+                <option value="mean">Mean memo length</option>
+                <option value="max">Longest single memo</option>
+                <option value="min">Shortest memo</option>
+                <option value="d">D-moves</option>
+                <option value="pinSum">Total pin changes</option>
+                <option value="pinMax">Pins changed per step</option>
+              </select></div>
+              <button id="dir" title="Toggle sort direction">Ascending ↑</button>
+            </div>
+          </fieldset>
+          <div class="row">
+            <button id="reset">Clear filters</button>
+            <button id="share" title="Copy a link to these filters and this sort">Copy link</button>
+            <span class="msg" id="shareMsg"></span>
+          </div>
         </div>
-        <div class="sortrow">
-          <div><label for="sortBy">Sort by</label><select id="sortBy">
-            <option value="sum">Total memo length</option>
-            <option value="memorized">Memorized turns</option>
-            <option value="mean">Mean memo length</option>
-            <option value="max">Longest single memo</option>
-            <option value="min">Shortest memo</option>
-            <option value="d">D-moves</option>
-            <option value="pinSum">Total pin changes</option>
-            <option value="pinMax">Pins changed per step</option>
-          </select></div>
-          <button id="dir" class="small" title="Toggle sort direction">Ascending ↑</button>
-        </div>
-      <div class="row">
-        <button class="small" id="reset">Clear filters</button>
-      </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <section class="card" id="resultsCard" hidden>
-    <p class="count" id="count"></p>
-    <div class="tablewrap">
-      <table>
-        <thead><tr>
-          <th>#</th><th>Order</th>
-          <th class="num" title="Turns you have to compute rather than line up by eye">Memorized</th>
-          <th class="num" title="Clocks to add up: shortest / mean / longest formula">Memo min / mean / max</th>
-          <th class="num" title="Sum of all memo formula lengths">Memo total</th>
-          <th class="num" title="Pin states among U, D, DL, DR, dl, dr">D-wheel</th>
-          <th class="num" title="Pins flipped over the six pin changes: total / most in one step">Pin changes</th>
-          <th class="num">Set</th>
-        </tr></thead>
-        <tbody id="rows"></tbody>
-      </table>
+  <div class="window" id="resultsCard" data-win="Results" hidden>
+    <div class="title-bar"><div class="title-bar-text"><span class="glyph">📋</span>Results</div><div class="title-bar-controls"><button aria-label="Minimize" title="Minimize"></button><button aria-label="Maximize" title="Maximize"></button><button aria-label="Close" title="Close"></button></div></div>
+    <div class="window-body">
+      <div class="tablewrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Order</th>
+            <th class="num" title="Turns you have to compute rather than line up by eye">Memorized</th>
+            <th class="num" title="Clocks to add up: shortest / mean / longest formula">Memo min / mean / max</th>
+            <th class="num" title="Sum of all memo formula lengths">Memo total</th>
+            <th class="num" title="Pin states among U, D, DL, DR, dl, dr">D-wheel</th>
+            <th class="num" title="Pins flipped over the six pin changes: total / most in one step">Pin changes</th>
+            <th class="num">Set</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="row"><button id="more" hidden>Show 100 more</button></div>
+      <details>
+        <summary>What the columns mean</summary>
+        <p><strong>Memorized</strong>: of the 14 wheel turns, how many need a memo formula; the rest are intuitive (line clocks up by eye; expand a row to see which clocks go with which).</p>
+        <p><strong>Memo</strong>: a formula's length is the number of clocks you add up to get that turn. Shorter is easier to memorize.</p>
+        <p><strong>D-wheel</strong>: pin states whose front move is on a D wheel (U, D, DL, DR, dl, dr), which some people find awkward.</p>
+        <p><strong>Pin changes</strong>: how many pins you flip between consecutive pin states. Fewer means faster hands.</p>
+        <p>The numbers are generated by <code>scripts/build-orders.js</code>, a port of the statistics loop in <code>ClockClean.Rmd</code>, and stored as plain CSV in <code>docs/data/orders/</code> (one file per pin set).</p>
+      </details>
     </div>
-    <div class="row"><button id="more" hidden>Show 100 more</button></div>
-    <details>
-      <summary>What the columns mean</summary>
-      <p><strong>Memorized</strong>: of the 14 wheel turns, how many need a memo formula; the rest are intuitive (line clocks up by eye; expand a row to see which clocks go with which).</p>
-      <p><strong>Memo</strong>: a formula's length is the number of clocks you add up to get that turn. Shorter is easier to memorize.</p>
-      <p><strong>D-wheel</strong>: pin states whose front move is on a D wheel (U, D, DL, DR, dl, dr), which some people find awkward.</p>
-      <p><strong>Pin changes</strong>: how many pins you flip between consecutive pin states. Fewer means faster hands.</p>
-      <p>The numbers are generated by <code>scripts/build-orders.js</code>, a port of the statistics loop in <code>ClockClean.Rmd</code>, and stored as plain CSV in <code>docs/data/orders/</code> (one file per pin set).</p>
-    </details>
-  </section>
+    <div class="status-bar"><p class="status-bar-field count" id="count"></p></div>
+  </div>
 
-  <footer>By Chris Nankervis and Bruno Couto. Runs entirely locally.</footer>
+  <p class="desk-footer">By Chris Nankervis and Bruno Couto. Runs entirely locally.</p>
 </main>
 
+<div class="taskbar">
+  <button class="start" id="start" type="button" aria-haspopup="true" aria-expanded="false"><span class="flag"><i></i><i></i><i></i><i></i></span>start</button>
+  <div class="tasks" id="tasks">
+    <a class="taskbtn" href="index.html"><img class="ico" src="favicon.png" alt=""><span class="label">7-Simul Wizard</span></a>
+    <a class="taskbtn active" href="orders.html"><span class="glyph">🔍</span><span class="label">Pin Order Finder</span></a>
+  </div>
+  <div class="tray">
+    <button class="theme" id="theme" type="button" role="switch" aria-label="Dark theme"><span class="sun">☀</span><span class="moon">☾</span><span class="knob"></span></button>
+    <span class="clock" id="clock">--:--</span>
+  </div>
+</div>
+<div class="startmenu" id="startmenu" hidden>
+  <div class="head"><img class="ico" src="favicon.png" alt="">7sith</div>
+  <ul>
+    <li><a href="index.html"><img class="ico" src="favicon.png" alt=""><span>7-Simul Wizard<span class="sub">Solve a scramble with your pin order</span></span></a></li>
+    <li><a href="orders.html"><span class="glyph">🔍</span><span>Pin Order Finder<span class="sub">Search all 1,370,880 pin orders</span></span></a></li>
+    <li class="sep"></li>
+    <li><a href="https://github.com/chrnan6710/7sithrmarkdown" target="_blank" rel="noopener"><span class="glyph">📄</span><span>ClockClean.Rmd on GitHub<span class="sub">The notebook behind the maths</span></span></a></li>
+    <li><button type="button" data-open-about><span class="glyph">💿</span><span>About 7sith</span></button></li>
+  </ul>
+  <div class="foot">Runs entirely in your browser; nothing is sent anywhere.</div>
+</div>
+<div class="window about" id="about" hidden>
+  <div class="title-bar"><div class="title-bar-text"><img class="ico" src="favicon.png" alt="">About 7sith</div><div class="title-bar-controls"><button aria-label="Close" title="Close"></button></div></div>
+  <div class="window-body">
+    <img src="favicon.png" alt="">
+    <div>
+      <p><strong>7sith | 7-Simul Wizard</strong></p>
+      <p>By Chris Nankervis and Bruno Couto. Linear-algebra method from <code>ClockClean.Rmd</code>.</p>
+      <p>Theme: Windows XP, courtesy of <a href="https://github.com/botoxparty/XP.css" target="_blank" rel="noopener">XP.css</a> (MIT).</p>
+      <div class="row"><button type="button" class="btn-default" data-close-about>OK</button></div>
+    </div>
+  </div>
+</div>
+
 <script src="clock.js"></script>
+<script src="xp-desktop.js"></script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -240,7 +249,7 @@
         const text = await res.text();
         filled += parseSetFile(text, s.n, (s.n - 1) * 5040);
         done++;
-        bar.style.width = (100 * done / sets.length).toFixed(1) + "%";
+        bar.max = sets.length; bar.value = done;
         $("loadMsg").textContent = "Loaded " + done + " of " + sets.length + " pin-set files…";
       }
     }
@@ -321,7 +330,7 @@
     if (sort && [...$("sortBy").options].some((o) => o.value === sort)) $("sortBy").value = sort;
     dirAsc = p.get("dir") !== "desc"; $("dir").textContent = dirAsc ? "Ascending ↑" : "Descending ↓";
   }
-  function setMsg(id, text, cls) { const el = $(id); el.textContent = text; el.className = "msg" + (cls ? " " + cls : ""); }
+  function setMsg(id, text, cls) { const el = $(id); el.textContent = text; el.className = "msg" + (cls ? " " + cls : "") + (el.dataset.keep ? " " + el.dataset.keep : ""); }
   function share() {
     const url = location.href;
     const done = (ok) => { setMsg("shareMsg", ok ? "Link copied" : "Copy the address bar", ok ? "ok" : "warn"); setTimeout(() => setMsg("shareMsg", ""), 2500); };
