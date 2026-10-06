@@ -116,6 +116,13 @@
   nav .theme .knob { position: absolute; z-index: 0; top: 50%; left: 2px; width: 25px; height: 25px; opacity: 1; border-radius: 50%; background: var(--card); border: 1px solid var(--line); transform: translate(0, -50%); transition: transform 0.2s; }
   nav .theme[data-theme="dark"] .knob { transform: translate(29px, -50%); }
   nav .theme[data-theme="light"] .sun, nav .theme[data-theme="dark"] .moon { opacity: 1; }
+  /* Plain pill switch (same shape as the theme switch, no icons): track fills with the accent colour when on. */
+  .switch { position: relative; display: inline-block; flex: none; width: 48px; height: 28px; padding: 0; border-radius: 999px; background: var(--chip); border: 1px solid var(--line); cursor: pointer; transition: background 0.2s, border-color 0.2s; }
+  .switch .knob { position: absolute; top: 50%; left: 2px; width: 25px; height: 25px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); transform: translate(0, -50%); transition: transform 0.2s; }
+  .switch[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
+  .switch[aria-checked="true"] .knob { transform: translate(20px, -50%); }
+  .switch:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent); }
+  .switch-label { font-size: 0.9rem; cursor: pointer; user-select: none; }
   footer { color: var(--muted); font-size: 0.8rem; margin-top: 32px; }
   footer a { color: inherit; }
 </style>
@@ -136,6 +143,10 @@
         <button class="primary" id="apply">Apply scramble</button>
         <button id="random">Random scramble</button>
         <button id="reset">Reset to solved</button>
+      </div>
+      <div class="row">
+        <button class="switch" id="endFront" role="switch" aria-checked="false" aria-labelledby="endFrontLbl" title="Off: the clock stays turned over after the y2, so the old back is shown as the front. On: the original front stays the front."><span class="knob"></span></button>
+        <span class="switch-label" id="endFrontLbl">End scramble on front</span>
       </div>
       <div class="msg" id="scrambleMsg"></div>
     </section>
@@ -198,6 +209,8 @@
   // Back face as seen after a y2: corners are the front corners mirrored and geared (hour = -front hour).
   const BACK_LAYOUT = ["UR*", "Ub", "UL*", "Lb", "Cb", "Rb", "DR*", "Db", "DL*"];
   const state = new Array(14).fill(0);
+  // Off (default): the clock stays turned over after the scramble's y2, so the old back is shown as the front.
+  let endFront = false;
   const dials = [];
   const NS = "http://www.w3.org/2000/svg";
   const idx = (name) => Clock.CLOCKS.indexOf(name);
@@ -276,6 +289,7 @@
   function setOrder(order) { order.forEach((p, i) => { selects[i].value = p; }); saveOrder(); }
   function saveOrder() { try { localStorage.setItem("clock7.order", getOrder().join(" ")); } catch (e) {} }
   function setMsg(id, text, cls) { const el = $(id); el.textContent = text; el.className = "msg" + (cls ? " " + cls : ""); }
+  function renderSwitch() { $("endFront").setAttribute("aria-checked", endFront ? "true" : "false"); }
 
   function pinDiagram(pinsUp) {
     const d = document.createElement("div"); d.className = "pindiag"; d.title = "Pins up (UL UR / DL DR)";
@@ -299,6 +313,7 @@
     const text = $("scramble").value.trim();
     if (text) p.set("scramble", text);
     if (state.some((h) => h !== 0)) p.set("state", state.join(","));
+    if (endFront) p.set("front", "1");
     p.set("order", getOrder().map(Clock.pinLabel).join(" "));
     const qs = p.toString();
     history.replaceState(null, "", qs ? "?" + qs : location.pathname);
@@ -346,7 +361,11 @@
 
   function applyScramble() {
     const text = $("scramble").value;
-    try { setState(Clock.parseScramble(text)); setMsg("scrambleMsg", "Scramble applied to the faces.", "ok"); }
+    try {
+      let s = Clock.parseScramble(text);
+      if (!endFront) s = Clock.flipState(s); // the clock stays turned over after the y2
+      setState(s); setMsg("scrambleMsg", "Scramble applied to the faces.", "ok");
+    }
     catch (e) { setMsg("scrambleMsg", e.message, "bad"); }
     update();
   }
@@ -355,6 +374,14 @@
   $("scramble").addEventListener("input", syncUrl);
   $("random").addEventListener("click", () => { $("scramble").value = Clock.randomScramble(); applyScramble(); });
   $("reset").addEventListener("click", () => { $("scramble").value = ""; setState(new Array(14).fill(0)); setMsg("scrambleMsg", ""); update(); });
+  // Turning the switch turns the clock over: the two faces swap, and the solution is redone for the new front.
+  $("endFront").addEventListener("click", () => {
+    endFront = !endFront; renderSwitch();
+    setState(Clock.flipState(getState()));
+    setMsg("scrambleMsg", "Clock turned over: the scramble now ends on the " + (endFront ? "front" : "back") + ".", "ok");
+    update();
+  });
+  $("endFrontLbl").addEventListener("click", () => $("endFront").click());
   for (const b of document.querySelectorAll(".presets button")) b.addEventListener("click", () => { setOrder(b.dataset.order.split(" ")); update(); });
 
   // initial order: from the URL (?order=dl+R+DR+…, as linked from the pin order finder), else last used, else Tommy's
@@ -364,6 +391,8 @@
   const urlOrder = (params.get("order") || "").trim().split(/\s+/).filter(Boolean).map(Clock.pinFromLabel);
   if (urlOrder.length === 7 && urlOrder.every((p) => Clock.PIN_STATES.includes(p))) initial = urlOrder.join(" ");
   setOrder(initial.split(" "));
+  // ?front=1 keeps the original front as the front after the scramble (default: the clock stays turned over)
+  endFront = params.get("front") === "1"; renderSwitch();
   // faces: ?state=14 hours (dials as last set) wins over ?scramble=, which is applied fresh
   const q = params.get("scramble");
   if (q) $("scramble").value = q;

@@ -24,6 +24,28 @@ test("scramble parser rejects garbage", () => {
   assert.throws(() => Clock.parseScramble(""));
 });
 
+test("flipState turns the clock over", () => {
+  // The new front is the old back as the page shows it (corners mirrored and negated), the new back is the old front.
+  const FLIPPED = [0, 9, 2, 6, 1, 11, 10, 8, 2, 7, 11, 3, 8, 6];
+  assert.deepEqual(Clock.flipState(TEST_STATE), FLIPPED);
+  assert.deepEqual(Clock.flipState(FLIPPED), TEST_STATE);
+  assert.deepEqual(Clock.flipState(new Array(14).fill(0)), new Array(14).fill(0));
+  // Turning over after "y2 B" is the same as doing B on the front: the puzzle is symmetric front to back.
+  let seed = 9;
+  const rng = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
+  for (let i = 0; i < 50; i++) {
+    const back = Clock.randomScramble(rng).split(" y2 ")[1];
+    assert.deepEqual(Clock.flipState(Clock.parseScramble("y2 " + back)), Clock.parseScramble(back));
+  }
+  // The solver is happy with flipped states too.
+  for (const order of Object.values(ORDERS)) {
+    const state = Clock.flipState(CONNOR_STATE);
+    const sol = Clock.solve(order, state);
+    assert.ok(sol.ok);
+    assert.deepEqual(Clock.applyMoves(order, sol.raw, state), new Array(14).fill(0));
+  }
+});
+
 test("exactly 272 of the 3432 seven-pin sets have full rank, 268 of them with determinant ±1", () => {
   function* combos(arr, k, start = 0, acc = []) {
     if (acc.length === k) { yield acc.slice(); return; }

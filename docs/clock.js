@@ -346,6 +346,23 @@
     return s;
   }
 
+  /**
+   * The state as seen after turning the clock over (a y2): the back face becomes the front.
+   * The new front is the old back as it looks from the back (corners mirrored and geared, so negated),
+   * and the new back is the old front. Applying it twice gives the original state back.
+   */
+  function flipState(state) {
+    const s = new Array(14);
+    const at = (name) => ((state[CLOCKS.indexOf(name)] % 12) + 12) % 12;
+    const neg = (name) => (12 - at(name)) % 12;
+    const out = {
+      UL: neg("UR"), U: at("Ub"), UR: neg("UL"), L: at("Lb"), C: at("Cb"), R: at("Rb"), DL: neg("DR"), D: at("Db"), DR: neg("DL"),
+      Ub: at("U"), Lb: at("L"), Cb: at("C"), Rb: at("R"), Db: at("D"),
+    };
+    for (let i = 0; i < 14; i++) s[i] = out[CLOCKS[i]];
+    return s;
+  }
+
   /** Random WCA-style scramble. */
   function randomScramble(rng = Math.random) {
     const turn = () => { const k = Math.floor(rng() * 12) - 5; return k === 0 ? "0+" : Math.abs(k) + (k > 0 ? "+" : "-"); };
@@ -357,6 +374,6 @@
   return {
     CLOCKS, PIN_STATES, MOVES, PINS_UP, PIN_LABELS, pinLabel, pinFromLabel, Q,
     moveMatrix, invertExact, analyse, intuitiveMoves, intuitiveAlignments, describeAlignment, BLOCKS, validateOrder, solve, applyMoves,
-    parseScramble, randomScramble, formatTurn, normTurn, normFrac, isFraction, formatFormula,
+    parseScramble, flipState, randomScramble, formatTurn, normTurn, normFrac, isFraction, formatFormula,
   };
 });
