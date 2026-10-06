@@ -202,6 +202,7 @@
 </main>
 
 <script src="clock.js"></script>
+<script src="orders-db.js"></script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -401,6 +402,10 @@
   else if (q) applyScramble();
   else update();
 })();
+</script>
+<script>
+  // Warm the pin-order finder's cache while the visitor is busy here, so the finder opens instantly later.
+  window.addEventListener("load", () => OrdersDB.schedulePreload());
 </script>
 </body>
 </html>

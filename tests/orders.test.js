@@ -86,3 +86,10 @@ test("CSV files on disk are complete and match a fresh computation", () => {
     assert.deepEqual(got, [want.min_memo, want.max_memo, want.sum_memo, want.memorized, want.d_moves, want.pin_changes, want.max_pin_changes]);
   }
 });
+
+test("version.json matches the CSV files on disk", () => {
+  const v = JSON.parse(fs.readFileSync(path.join(build.OUT_DIR, "version.json"), "utf8"));
+  assert.equal(v.version, build.dataVersion());
+  assert.equal(v.sets, 272);
+  assert.equal(v.orders, 272 * 5040);
+});

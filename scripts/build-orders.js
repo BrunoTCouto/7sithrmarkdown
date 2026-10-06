@@ -7,6 +7,7 @@
  *
  * Output (all plain text, so the numbers can be read straight from the repository):
  *   docs/data/orders/sets.csv   one line per pin set: its number, pin states, determinant
+ *   docs/data/orders/version.json  a hash of all the CSVs; the pages use it to know when their browser cache is stale
  *   docs/data/orders/NNN.csv    the 5040 orderings of set NNN, best (lowest total memo) first
  *
  * Columns of NNN.csv, matching the notebook's data frame:
@@ -24,6 +25,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const Clock = require("../docs/clock.js");
 
 const D_PINS = new Set(["U", "D", "DL", "DR", "dl", "dr"]);
@@ -112,6 +114,13 @@ function rowToCsv(r) {
 
 function setFileName(n) { return String(n).padStart(3, "0") + ".csv"; }
 
+/** Hash of every CSV in OUT_DIR (sorted by name): the pages' cache key. */
+function dataVersion(dir = OUT_DIR) {
+  const h = crypto.createHash("sha1");
+  for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".csv")).sort()) { h.update(f); h.update(fs.readFileSync(path.join(dir, f))); }
+  return h.digest("hex").slice(0, 16);
+}
+
 function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
   const sets = validSets();
@@ -125,9 +134,10 @@ function main() {
     if (n % 34 === 0 || n === sets.length) process.stderr.write("  " + n + "/" + sets.length + " pin sets written\n");
   });
   fs.writeFileSync(path.join(OUT_DIR, "sets.csv"), index.join("\n") + "\n");
+  fs.writeFileSync(path.join(OUT_DIR, "version.json"), JSON.stringify({ version: dataVersion(), sets: sets.length, orders: sets.length * 5040 }) + "\n");
   process.stderr.write("Wrote " + sets.length + " sets (" + sets.length * 5040 + " orders) to " + path.relative(process.cwd(), OUT_DIR)
     + " in " + ((Date.now() - t0) / 1000).toFixed(1) + " s\n");
 }
 
-module.exports = { validSets, orderStats, memoLengths, statsForSet, setFileName, HEADER, D_PINS, OUT_DIR };
+module.exports = { validSets, orderStats, memoLengths, statsForSet, setFileName, dataVersion, HEADER, D_PINS, OUT_DIR };
 if (require.main === module) main();

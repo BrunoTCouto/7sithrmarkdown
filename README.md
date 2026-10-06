@@ -37,6 +37,10 @@ and are committed as plain CSV so they can be read on GitHub:
   Mean memo length is `sum_memo / memorized`; mean pin changes per step is `pin_changes / 6`.
 
 Regenerating takes a few seconds; the output is deterministic, so a rerun should produce no diff.
+The script also writes `version.json`, a hash of the CSVs. `docs/orders-db.js` parses the files
+once and keeps the result in the browser's IndexedDB under that version, so later visits open the
+finder in well under a second instead of fetching 272 files; the solver page fills that cache in
+the background while idle. Regenerating the data changes the version and the cache rebuilds itself.
 
 Conventions match the notebook: both the front wheel (a pin that is up) and the back wheel
 (a pin that is down) are turned as seen from the front, `+` is clockwise; back faces are

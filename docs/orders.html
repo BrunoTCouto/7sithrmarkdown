@@ -183,6 +183,7 @@
 </main>
 
 <script src="clock.js"></script>
+<script src="orders-db.js"></script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -191,62 +192,11 @@
   const PAGE = 100;
   const IDX_BITS = 2097152; // 2^21 > 1,370,880 rows, used to pack sort key + row index into one float
 
-  // ---------- data ----------
+  // ---------- data (loaded by orders-db.js, cached in IndexedDB) ----------
   let N = 0;
   let pins, pinMask, setNo, stMin, stMax, stSum, stMem, stD, stPinSum, stPinMax;
-  const sets = []; // {n, pins, det, thirds}
-
-  function allocate(n) {
-    N = n;
-    pins = new Uint8Array(n * 7); pinMask = new Uint16Array(n); setNo = new Uint16Array(n);
-    stMin = new Uint8Array(n); stMax = new Uint8Array(n); stSum = new Uint8Array(n); stMem = new Uint8Array(n);
-    stD = new Uint8Array(n); stPinSum = new Uint8Array(n); stPinMax = new Uint8Array(n);
-  }
-
-  function parseSetFile(text, n, base) {
-    const lines = text.split("\n");
-    let r = base;
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i];
-      if (!line) continue;
-      const c = line.split(",");
-      const names = c[0].split(" ");
-      let mask = 0;
-      for (let k = 0; k < 7; k++) { const pi = PIN_INDEX[names[k]]; pins[r * 7 + k] = pi; mask |= 1 << pi; }
-      pinMask[r] = mask; setNo[r] = n;
-      stMin[r] = +c[1]; stMax[r] = +c[2]; stSum[r] = +c[3]; stMem[r] = +c[4]; stD[r] = +c[5]; stPinSum[r] = +c[6]; stPinMax[r] = +c[7];
-      r++;
-    }
-    return r - base;
-  }
-
-  async function load() {
-    const idx = await (await fetch("data/orders/sets.csv")).text();
-    for (const line of idx.trim().split("\n").slice(1)) {
-      const c = line.split(",");
-      const det = parseInt(c[2], 10);
-      sets.push({ n: +c[0], pins: c[1], det, thirds: Math.abs(det) !== 1 });
-    }
-    allocate(sets.length * 5040);
-    let done = 0, filled = 0;
-    const queue = sets.slice();
-    const bar = $("bar");
-    async function worker() {
-      while (queue.length) {
-        const s = queue.shift();
-        const file = String(s.n).padStart(3, "0") + ".csv";
-        const res = await fetch("data/orders/" + file);
-        if (!res.ok) throw new Error("Could not load " + file + " (" + res.status + ")");
-        const text = await res.text();
-        filled += parseSetFile(text, s.n, (s.n - 1) * 5040);
-        done++;
-        bar.style.width = (100 * done / sets.length).toFixed(1) + "%";
-        $("loadMsg").textContent = "Loaded " + done + " of " + sets.length + " pin-set files…";
-      }
-    }
-    await Promise.all(Array.from({ length: 6 }, worker));
-    if (filled !== N) throw new Error("Expected " + N + " orders, read " + filled);
-  }
+  let sets = []; // {n, pins, det, thirds}
+  function adopt(d) { N = d.N; sets = d.sets; ({ pins, pinMask, setNo, stMin, stMax, stSum, stMem, stD, stPinSum, stPinMax } = d); }
 
   // ---------- filters ----------
   const chipState = new Array(14).fill(0); // 0 neutral, 1 require, 2 exclude
@@ -438,7 +388,14 @@
   });
 
   readUrl();
-  load().then(() => {
+  const bar = $("bar");
+  OrdersDB.load({
+    onProgress: (p) => {
+      bar.style.width = (100 * p.done / p.total).toFixed(1) + "%";
+      $("loadMsg").textContent = p.from === "cache" ? "Loading from the browser cache…" : "Loaded " + p.done + " of " + p.total + " pin-set files…";
+    },
+  }).then((d) => {
+    adopt(d);
     $("loading").hidden = true; $("filtersCard").hidden = false; $("resultsCard").hidden = false;
     run();
   }).catch((e) => {
