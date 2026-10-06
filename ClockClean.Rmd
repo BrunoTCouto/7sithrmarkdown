@@ -10,6 +10,7 @@ require(tibble)
 require(evaluate)
 require(dplyr)
 require(combinat)
+require(stringr)
 ```
 
 For every pair of simultaneous moves (all of which correspond to a pin state), I create a 14x2 matrix "[pin state]" in which the first column represents the front move and the second the back. 1 means clockwise one hour, -1 means counterclockwise one hour. The last five entries in each column are negated because a CW move on the front means a CWW move on the back clocks and V.V.
@@ -450,8 +451,6 @@ I define a function "mat" that shows the general calculation of how far to perfo
 
 A move matrix, by our construction convention, transforms vectors in move space into vectors in clock spaces, thus the inverse of a move matrix transforms vectors in clock space into vectors in move space. Transforming a clock state (column) vector by multiplying it (on the left) by an inverse move matrix therefore returns the magnitudes of the move matrix' moves that create that clock state. Because matrix transformation of a vector is simply finding the dot product of each of the matrix' rows with said vector, each row of the inverse move matrix therefore shows exactly what linear combination of the clocks calculates the magnitude of the row's corresponding move. To display this nicely, we simply put the clock names along the top and the move names next to the rows.
 
-
-
 ```{r}
 mat <- function(input) {
   
@@ -481,8 +480,6 @@ mat <- function(input) {
   return(thisDataFrame)
 }
 ```
-
-
 
 I define a function "sol" (short for solution) that shows the magnitude of each of the 14 moves in the nth pin set for a given clock state. Note that this does NOT state whether a move is intuitive.
 
@@ -519,7 +516,6 @@ sol <- function(input, clockState) {
   return(plainSol)
 }
 ```
-
 
 
 
@@ -578,6 +574,125 @@ mem <- function(input) {
 }
 ```
 
+
+```{r}
+memx2 <- function(input) {
+  
+  # Get memorization matrix for given pin order
+  # Type doesn't matter because that's handled by the mat() function
+  memMat = mat(input)
+  
+  # Get clock names for creating memorization strings
+  clockNames = strsplit("UL U UR L C R DL D DR Ub Lb Cb Rb Db"," ")[[1]]
+  
+  # Get which moves actually have to be presented by seeing which ones are not intuitive.
+  # Also what? The fuck?
+  toParse = setdiff(1:14,sort(abs(2*intFinder(ordtomat(input)) - 0.5) - 0.5))
+  
+  # Create character vector to populate.
+  uncat = rep("I",14)
+  
+  for(move in toParse) {
+    
+    # Get this line of the memorization matrix. Negate it so we get the moves to create the inverse scramble.
+    thisMove = -1 * as.double(memMat[move,1:14])
+    
+    roughString = ""
+    
+    for (clock in 1:14) {
+      
+      if (thisMove[clock] < 0) {
+        
+        roughString = paste(roughString, as.character(thisMove[clock]), clockNames[clock], sep="")
+        
+      }
+      
+      if (thisMove[clock] > 0) {
+        
+        roughString = paste(roughString, "+", as.character(thisMove[clock]), clockNames[clock], sep = "")
+        
+      }
+      
+    }
+    
+    # Check if the sum of coefficients is even. If it isn't, we change the reading of the final corner in the memo string to the back version and negate its coefficient. This brings back the sum of coefficients to even-ness.
+    
+    if(abs(sum(round(thisMove)) %% 2) > 0.1) {
+    
+      lastCorner = str_extract(roughString,"(UL|UR|DL|DR)(?!.*(?:UL|UR|DL|DR))")
+      
+      lastCornerLocation = str_locate(roughString, "(UL|UR|DL|DR)(?!.*(?:UL|UR|DL|DR))")[1]
+      
+      # If we flipped a "+" to a "-", say we did so.
+      flipped = FALSE
+      
+      # Change the sign behind the last corner's coefficient to the other string. This is really poorly written. I am a mathematician.
+      if (substr(roughString, lastCornerLocation - 2, lastCornerLocation - 2) == "+") {
+        
+        substr(roughString, lastCornerLocation - 2, lastCornerLocation - 2) = "-"
+        
+        flipped = TRUE
+        
+      }
+      
+      # Only flip the sign if it wasn't flipped already.
+      if (substr(roughString, lastCornerLocation - 2, lastCornerLocation - 2) == "-" && !flipped) {
+        
+        substr(roughString, lastCornerLocation - 2, lastCornerLocation - 2) = "+"
+        
+      }
+      
+      # Flip the corner.
+      
+      if(lastCorner == "UL") {
+        
+        roughString = gsub("(UL|UR|DL|DR)(?!.*(?:UL|UR|DL|DR))", "DLb", roughString, perl = TRUE)
+        
+      }
+      
+      if(lastCorner == "UR") {
+        
+        roughString = gsub("(UL|UR|DL|DR)(?!.*(?:UL|UR|DL|DR))", "DRb", roughString, perl = TRUE)
+        
+      }
+      
+      if(lastCorner == "DL") {
+        
+        roughString = gsub("(UL|UR|DL|DR)(?!.*(?:UL|UR|DL|DR))", "ULb", roughString, perl = TRUE)
+        
+      }
+      
+      if(lastCorner == "DR") {
+        
+        roughString = gsub("(UL|UR|DL|DR)(?!.*(?:UL|UR|DL|DR))", "URb", roughString, perl = TRUE)
+        
+      }
+    
+    }
+    
+    # Since we are in x2 mode, we swap Lb and Rb as well as Ub and Db. We add a "p" so the next replacement doesn't accidentally change it right back, then remove the "p"s.
+    roughString = gsub("(?<![DU])Lb(?!p)", "Rbp", roughString, perl = TRUE)
+    roughString = gsub("(?<![DU])Rb(?!p)", "Lbp", roughString, perl = TRUE)
+    roughString = gsub("Ub(?!p)", "Dbp", roughString, perl = TRUE)
+    roughString = gsub("Db(?!p)", "Ubp", roughString, perl = TRUE)
+    roughString = gsub("p", "", roughString)
+    
+    # Space nicely, remove coefficient 1s, remove leading +
+    roughString = gsub('1', '', roughString)
+    roughString = gsub('^\\+','',roughString)
+    roughString = gsub('-'," - ", roughString)
+    roughString = gsub("\\+"," + ", roughString)
+    
+    uncat[move] = roughString
+    
+  }
+  
+  
+  
+  return(t(matrix(uncat, ncol=7)))
+  
+}
+```
 
 
 ```{r}
