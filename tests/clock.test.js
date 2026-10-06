@@ -187,3 +187,54 @@ test("alignment descriptions match the notebook's newIntFinder(tommy) examples",
   assert.equal(Clock.describeAlignment({ pairs: ["UL", "U", "L", "C", "DL", "D"].map((c) => [c, "R"]) }), "align L block to R");
   assert.equal(Clock.describeAlignment({ pairs: [["C", "U"], ["C", "L"]] }), "align C to U/L");
 });
+
+test("x2 memo formulas (port of memx2) are right when the back is read upside down", () => {
+  // Labels in an x2 formula: Db/Ub/Lb/Rb/Cb are x2-view positions (Db = the clock physically at Ub, read +6);
+  // DLb/DRb/ULb/URb are front corners read on the back (6 - front value).
+  const NAMES = Clock.CLOCKS;
+  const PHYS = { Ub: "Db", Db: "Ub", Lb: "Rb", Rb: "Lb", Cb: "Cb" }, TWIN = { DLb: "UL", DRb: "UR", ULb: "DL", URb: "DR" };
+  function evalX2(str, state) {
+    let v = 0;
+    for (const m of str.matchAll(/([+-])?\s*(\d*)\s*([A-Za-z]+)/g)) {
+      const sign = m[1] === "-" ? -1 : 1, k = m[2] ? +m[2] : 1, lab = m[3];
+      const r = lab in TWIN ? (6 - state[NAMES.indexOf(TWIN[lab])] + 24) % 12 : lab in PHYS ? (state[NAMES.indexOf(PHYS[lab])] + 6) % 12 : state[NAMES.indexOf(lab)];
+      v += sign * k * r;
+    }
+    return ((v % 12) + 12) % 12;
+  }
+  function* combos(arr, k, start = 0, acc = []) {
+    if (acc.length === k) { yield acc.slice(); return; }
+    for (let i = start; i < arr.length; i++) { acc.push(arr[i]); yield* combos(arr, k, i + 1, acc); acc.pop(); }
+  }
+  let seed = 21;
+  const rng = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+  let rows = 0, swapped = 0, inexact = 0;
+  for (const set of combos(Clock.PIN_STATES, 7)) {
+    const { ok, det, inv } = Clock.invertExact(Clock.moveMatrix(set));
+    if (!ok) continue;
+    for (const row of inv) {
+      const f = Clock.formatFormulaX2(row);
+      if (det.n !== 1n && det.n !== -1n) { if (!f.exact) inexact++; continue; }
+      rows++;
+      assert.ok(f.exact);
+      if (/[A-Z][LR]b/.test(f.text)) swapped++;
+      for (let t = 0; t < 8; t++) {
+        const state = Array.from({ length: 14 }, () => Math.floor(rng() * 12));
+        const truth = ((row.reduce((s, q, c) => s + Number(q.n) * -state[c], 0) % 12) + 12) % 12;
+        assert.equal(evalX2(f.text, state), truth, f.text);
+      }
+    }
+  }
+  assert.equal(rows, 268 * 14);
+  assert.equal(swapped, 1076); // formulas whose back coefficients add up to an odd number
+  assert.ok(inexact > 0); // det ±3 rows with thirds are flagged, not "fixed"
+});
+
+test("x2 formulas for Tommy's order match the notebook's memx2 output", () => {
+  const a = Clock.analyse(ORDERS.tommy);
+  const got = a.inv.map((row, col) => (a.intuitive.has(col) ? null : a.formulasX2[col].text)).filter(Boolean);
+  assert.deepEqual(got, ["U + DRb - L - Rb", "- Db + Cb", "Db - Rb", "- U + UR + C + DL - D + Rb + Lb", "UL - L - R - URb + Db - Cb + Ub"]);
+  const sol = Clock.solve(ORDERS.tommy, TEST_STATE);
+  assert.equal(sol.steps[0].frontFormulaX2, "U + DRb - L - Rb");
+  assert.equal(sol.steps[0].frontX2Exact, true);
+});

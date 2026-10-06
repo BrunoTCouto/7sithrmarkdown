@@ -40,6 +40,13 @@
   nav strong { color: var(--ink); }
   nav .spacer { flex: 1; }
   nav .msg { margin: 0; min-height: 0; }
+  .switch { position: relative; display: inline-block; flex: none; width: 48px; height: 28px; padding: 0; border-radius: 999px; background: var(--chip); border: 1px solid var(--line); cursor: pointer; transition: background 0.2s, border-color 0.2s; }
+  .switch .knob { position: absolute; top: 50%; left: 2px; width: 25px; height: 25px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); transform: translate(0, -50%); transition: transform 0.2s; }
+  .switch[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
+  .switch[aria-checked="true"] .knob { transform: translate(20px, -50%); }
+  .switch:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent); }
+  .switch-label { font-size: 0.9rem; cursor: pointer; user-select: none; }
+  .formulas .warn { color: var(--warn); }
   nav .theme { position: relative; display: inline-flex; align-items: center; width: 60px; height: 28px; padding: 0; border-radius: 999px; background: var(--chip); border: 1px solid var(--line); cursor: pointer; }
   nav .theme span { position: relative; z-index: 1; width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 15px; line-height: 1; opacity: 0.4; transition: opacity 0.2s; }
   nav .theme .knob { position: absolute; z-index: 0; top: 50%; left: 2px; width: 25px; height: 25px; opacity: 1; border-radius: 50%; background: var(--card); border: 1px solid var(--line); transform: translate(0, -50%); transition: transform 0.2s; }
@@ -99,7 +106,7 @@
 </head>
 <body>
 <main>
-  <nav><a href="index.html">Solver</a> · <strong>Pin order finder</strong><span class="spacer"></span><span class="msg" id="shareMsg"></span><button class="small" id="share" title="Copy a link to these filters and this sort">Copy link</button><button class="theme" id="theme" role="switch" aria-label="Dark theme"><span class="sun">☀</span><span class="moon">☾</span><span class="knob"></span></button></nav>
+  <nav><a href="index.html">Solver</a> · <strong>Pin order finder</strong><span class="spacer"></span><button class="switch" id="x2" role="switch" aria-checked="false" aria-labelledby="x2Lbl" title="Show the memo formulas for the x2 view of the back (upside down, 12 at the bottom)."><span class="knob"></span></button><span class="switch-label" id="x2Lbl">x2 mode</span><span class="msg" id="shareMsg"></span><button class="small" id="share" title="Copy a link to these filters and this sort">Copy link</button><button class="theme" id="theme" role="switch" aria-label="Dark theme"><span class="sun">☀</span><span class="moon">☾</span><span class="knob"></span></button></nav>
   <h1>Clock Pin Order Finder</h1>
   <p class="lede">All 1,370,880 orderings of the 272 working 7-simul pin sets. Narrow them down, sort, and open any order in the solver.</p>
 
@@ -221,6 +228,7 @@
   function numOrNull(id) { const v = $(id).value.trim(); return v === "" ? null : Number(v); }
 
   let dirAsc = true;
+  let x2 = false; // same setting as the solver: formulas for the x2 view of the back
   let matched = null; // Float64Array of packed keys, sorted
   let matchCount = 0;
   let shown = 0;
@@ -252,6 +260,7 @@
     for (const id in NUM_PARAMS) if ($(id).value.trim() !== "") p.set(NUM_PARAMS[id], $(id).value.trim());
     if ($("sortBy").value !== "sum") p.set("sort", $("sortBy").value);
     if (!dirAsc) p.set("dir", "desc");
+    if (x2) p.set("x2", "1");
     const qs = p.toString();
     history.replaceState(null, "", qs ? "?" + qs : location.pathname);
   }
@@ -270,6 +279,9 @@
     const sort = p.get("sort");
     if (sort && [...$("sortBy").options].some((o) => o.value === sort)) $("sortBy").value = sort;
     dirAsc = p.get("dir") !== "desc"; $("dir").textContent = dirAsc ? "Ascending ↑" : "Descending ↓";
+    let x2Saved = null; try { x2Saved = localStorage.getItem("clock7.x2"); } catch (e) {}
+    x2 = p.has("x2") ? p.get("x2") === "1" : x2Saved === "1"; $("x2").setAttribute("aria-checked", x2 ? "true" : "false");
+    if (p.has("x2")) { try { localStorage.setItem("clock7.x2", x2 ? "1" : "0"); } catch (e) {} }
   }
   function setMsg(id, text, cls) { const el = $(id); el.textContent = text; el.className = "msg" + (cls ? " " + cls : ""); }
   function share() {
@@ -359,12 +371,17 @@
         const name = document.createElement("span"); name.className = "pin"; name.textContent = Clock.pinLabel(pin) + " " + side + ":";
         d.appendChild(name);
         if (a.intuitive.has(col)) { const s = document.createElement("span"); s.className = "int"; s.textContent = "intuitive (" + a.alignText[col] + ")"; d.appendChild(s); }
+        else if (x2) {
+          const f = a.formulasX2[col];
+          d.appendChild(document.createTextNode(f.text + " (" + a.memoLength[col] + ")"));
+          if (!f.exact) { const w = document.createElement("span"); w.className = "warn"; w.title = "Thirds cannot be read upside down: read the back dials by their printed numbers."; w.textContent = " read printed 12"; d.appendChild(w); }
+        }
         else d.appendChild(document.createTextNode(a.formulas[col] + " (" + a.memoLength[col] + ")"));
         grid.appendChild(d);
       }
     });
     const actions = document.createElement("div"); actions.className = "detail-actions";
-    const link = document.createElement("a"); link.href = "index.html?order=" + encodeURIComponent(order.join(" ")); link.textContent = "Open in solver →";
+    const link = document.createElement("a"); link.href = "index.html?order=" + encodeURIComponent(order.join(" ")) + (x2 ? "&x2=1" : ""); link.textContent = "Open in solver →";
     actions.appendChild(link);
     td.append(grid, actions); det.appendChild(td);
     tr.after(det);
@@ -379,6 +396,12 @@
   $("dir").addEventListener("click", () => { dirAsc = !dirAsc; $("dir").textContent = dirAsc ? "Ascending ↑" : "Descending ↓"; run(); });
   $("more").addEventListener("click", showMore);
   $("share").addEventListener("click", share);
+  $("x2").addEventListener("click", () => {
+    x2 = !x2; $("x2").setAttribute("aria-checked", x2 ? "true" : "false");
+    try { localStorage.setItem("clock7.x2", x2 ? "1" : "0"); } catch (e) {}
+    run(); // re-renders the rows, so open details show the right formulas
+  });
+  $("x2Lbl").addEventListener("click", () => $("x2").click());
   ClockTheme.mount($("theme"));
   $("reset").addEventListener("click", () => {
     for (let i = 0; i < 14; i++) setChip(i, 0);

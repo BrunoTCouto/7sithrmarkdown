@@ -128,6 +128,7 @@
       result.alignments = intuitiveAlignments(cols);
       result.alignText = result.alignments.map(describeAlignment);
       result.formulas = inv.map((row, i) => formatFormula(row));
+      result.formulasX2 = inv.map((row) => formatFormulaX2(row));
       result.memoLength = inv.map((row, i) => (result.intuitive.has(i) ? 0 : row.filter((q) => !q.isZero()).length));
     }
     cache.set(key, result);
@@ -244,6 +245,63 @@
     return terms.map((t, i) => (i === 0 ? (t.neg ? "-" : "") : t.neg ? " - " : " + ") + t.text).join("");
   }
 
+  // ---------- x2 mode: the back seen after turning the clock over the horizontal axis ----------
+  // Port of memx2() from ClockClean.Rmd. The back dials are upside down to the solver and read relative to
+  // the viewer, so every back reading is 6 off. When the back coefficients add up to an odd number, the last
+  // front corner with an odd coefficient is read on the back instead (its geared twin, sign flipped), which
+  // makes the number of upside-down readings even and the error a multiple of 12. Back clocks are then named
+  // by where they sit in the x2 view (Ub <-> Db, Lb <-> Rb). The string pipeline mirrors the R code.
+  const X2_TWIN = { UL: "DLb", UR: "DRb", DL: "ULb", DR: "URb" };
+  const X2_ODD_CORNER = /(?<=[13579])(?:UL|UR|DL|DR)(?!.*(?<=[13579])(?:UL|UR|DL|DR))/;
+  /**
+   * x2 memo formula for one move (a row of the inverse). Returns { text, exact }.
+   * exact is false for a row with fractional coefficients (determinant ±3 sets): no static rewrite is right for
+   * those under upside-down reading, so they are only relabelled and must be read by the dials' printed numbers.
+   */
+  function formatFormulaX2(invRow) {
+    const thisMove = invRow.map((q) => q.neg()); // thisMove = -1 * memMat[move,]
+    if (!thisMove.every((q) => q.isInt())) {
+      const names = CLOCKS.map((n, i) => (i >= 9 ? { Ub: "Db", Lb: "Rb", Cb: "Cb", Rb: "Lb", Db: "Ub" }[n] : n));
+      return { text: formatTerms(thisMove, names), exact: false };
+    }
+    let s = "";
+    for (let c = 0; c < 14; c++) {
+      const v = Number(thisMove[c].n);
+      if (v < 0) s += String(v) + CLOCKS[c];
+      if (v > 0) s += "+" + v + CLOCKS[c];
+    }
+    let backSum = 0; for (let c = 9; c < 14; c++) backSum += Number(thisMove[c].n);
+    if (backSum % 2 !== 0) {
+      const m = s.match(X2_ODD_CORNER);
+      if (m) {
+        const lastCorner = m[0], loc = m.index; // sign sits two characters before the corner's name
+        let flipped = false;
+        if (s[loc - 2] === "+") { s = s.slice(0, loc - 2) + "-" + s.slice(loc - 1); flipped = true; }
+        if (s[loc - 2] === "-" && !flipped) s = s.slice(0, loc - 2) + "+" + s.slice(loc - 1);
+        s = s.replace(new RegExp(X2_ODD_CORNER.source, "g"), X2_TWIN[lastCorner]);
+      }
+    }
+    // in x2 mode Lb and Rb swap, as do Ub and Db; the "p" keeps the next replacement from undoing the previous one
+    s = s.replace(/(?<![DU])Lb(?!p)/g, "Rbp").replace(/(?<![DU])Rb(?!p)/g, "Lbp").replace(/Ub(?!p)/g, "Dbp").replace(/Db(?!p)/g, "Ubp").replace(/p/g, "");
+    // space nicely, remove coefficient 1s, remove leading +
+    s = s.replace(/1/g, "").replace(/^\+/, "").replace(/-/g, " - ").replace(/\+/g, " + ");
+    return { text: s.trim(), exact: true };
+  }
+  /** "UL - U + 2 Cb" from coefficients (Q) and clock names. */
+  function formatTerms(coefs, names) {
+    const terms = [];
+    for (let c = 0; c < 14; c++) {
+      const coef = coefs[c];
+      if (coef.isZero()) continue;
+      const neg = coef.n < 0n;
+      const abs = neg ? coef.neg() : coef;
+      const mag = abs.n === 1n && abs.d === 1n ? "" : abs.toString() + " ";
+      terms.push({ neg, text: mag + names[c] });
+    }
+    if (!terms.length) return "0";
+    return terms.map((t, i) => (i === 0 ? (t.neg ? "-" : "") : t.neg ? " - " : " + ") + t.text).join("");
+  }
+
   /** Normalise a turn to the range -5..6 hours. */
   function normTurn(v) { return ((((v + 5) % 12) + 12) % 12) - 5; }
   /** Normalise a fractional turn (a Q) to the range (-6, 6]. Such turns only occur with determinant ±3 pin sets. */
@@ -304,6 +362,10 @@
       backIntuitive: a.intuitive.has(2 * i + 1),
       frontFormula: a.formulas[2 * i],
       backFormula: a.formulas[2 * i + 1],
+      frontFormulaX2: a.formulasX2[2 * i].text,
+      backFormulaX2: a.formulasX2[2 * i + 1].text,
+      frontX2Exact: a.formulasX2[2 * i].exact,
+      backX2Exact: a.formulasX2[2 * i + 1].exact,
       frontAlign: a.alignText[2 * i],
       backAlign: a.alignText[2 * i + 1],
     }));
@@ -374,6 +436,6 @@
   return {
     CLOCKS, PIN_STATES, MOVES, PINS_UP, PIN_LABELS, pinLabel, pinFromLabel, Q,
     moveMatrix, invertExact, analyse, intuitiveMoves, intuitiveAlignments, describeAlignment, BLOCKS, validateOrder, solve, applyMoves,
-    parseScramble, flipState, randomScramble, formatTurn, normTurn, normFrac, isFraction, formatFormula,
+    parseScramble, flipState, randomScramble, formatTurn, normTurn, normFrac, isFraction, formatFormula, formatFormulaX2, X2_TWIN,
   };
 });

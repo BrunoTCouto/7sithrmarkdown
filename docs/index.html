@@ -67,6 +67,17 @@
   .face .title { font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
   .clockgrid { display: grid; grid-template-columns: repeat(3, 68px); gap: 6px; }
   @media (max-width: 400px) { .clockgrid { grid-template-columns: repeat(3, 58px); } }
+  /* x2 mode: the back is seen after turning the clock over the horizontal axis, i.e. rotated 180° */
+  .clockgrid { transition: transform 0.7s cubic-bezier(0.34, 1.4, 0.64, 1); }
+  .clockgrid.x2 { transform: rotate(180deg); }
+  /* keep the small labels readable and in their usual corners while the dial itself is upside down */
+  .clockgrid.x2 .dial .lbl { transform: rotate(180deg); left: auto; top: auto; right: 6px; bottom: 2px; }
+  .clockgrid.x2 .dial .hour { transform: rotate(180deg); right: auto; bottom: auto; left: 6px; top: 1px; }
+  /* "End scramble on front": the puzzle turns over */
+  .faces { perspective: 900px; }
+  .faces.turning { animation: turnOver 0.6s ease-in-out; }
+  @keyframes turnOver { 0% { transform: rotateY(0); } 50% { transform: rotateY(90deg); } 100% { transform: rotateY(0); } }
+  @media (prefers-reduced-motion: reduce) { .clockgrid { transition: none; } .faces.turning { animation: none; } }
   .dial { position: relative; width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; touch-action: none; outline: none; }
   .dial:focus-visible { box-shadow: 0 0 0 3px var(--accent); }
   .dial svg { width: 100%; height: 100%; display: block; }
@@ -97,6 +108,8 @@
   .step .num.zero { color: var(--muted); font-weight: 400; }
   .step .num.impossible { color: var(--bad); }
   .tag.bad { background: var(--exclude, #f8e5e3); color: var(--bad); }
+  .tag.warn { background: #fff3d6; color: var(--warn); }
+  .formula .memo { opacity: 0.75; }
   .turn .what { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
   .turn .formula { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); word-break: break-word; }
   .tag { display: inline-block; font-size: 0.7rem; padding: 1px 6px; border-radius: 999px; background: var(--intuitive); color: var(--intuitive-ink); margin-left: 4px; vertical-align: middle; }
@@ -129,7 +142,7 @@
 </head>
 <body>
 <main>
-  <nav><strong>Solver</strong> · <a href="orders.html">Pin Order Finder</a><span class="spacer"></span><span class="msg" id="shareMsg"></span><button id="share" title="Copy a link to this scramble, clock state, and pin order">Copy link</button><button class="theme" id="theme" role="switch" aria-label="Dark theme"><span class="sun">☀</span><span class="moon">☾</span><span class="knob"></span></button></nav>
+  <nav><strong>Solver</strong> · <a href="orders.html">Pin Order Finder</a><span class="spacer"></span><button class="switch" id="x2" role="switch" aria-checked="false" aria-labelledby="x2Lbl" title="Off: the back is seen after a y2 (12 at the top). On: the back is seen after an x2, upside down (12 at the bottom), and the memo formulas are written for that view."><span class="knob"></span></button><span class="switch-label" id="x2Lbl">x2 mode</span><span class="msg" id="shareMsg"></span><button id="share" title="Copy a link to this scramble, clock state, and pin order">Copy link</button><button class="theme" id="theme" role="switch" aria-label="Dark theme"><span class="sun">☀</span><span class="moon">☾</span><span class="knob"></span></button></nav>
   <h1>7sith | 7-Simul Wizard</h1>
   <p class="lede">Get a scramble or set the clock faces, pick your seven pin states, and get the simultaneous moves that solve it.</p>
 
@@ -173,7 +186,7 @@
           <div class="clockgrid" id="front"></div>
         </div>
         <div class="face">
-          <div class="title">Back (y2, 12 top)</div>
+          <div class="title" id="backTitle">Back (y2, 12 top)</div>
           <div class="clockgrid" id="back"></div>
         </div>
       </div>
@@ -194,7 +207,8 @@
       <p><strong>Pins</strong>: filled dot = pin up, seen from the front (UL UR / DL DR).</p>
       <p><strong>Front wheel</strong>: turn any wheel whose pin is <em>up</em>. <strong>Back wheel</strong>: turn any wheel whose pin is <em>down</em>. Do both without changing pins.</p>
       <p>All turns are hours as seen from the front: <code>3+</code> is three hours clockwise, <code>2-</code> two hours anticlockwise.</p>
-      <p>The small formula under each turn is what you would memorize to compute it from the scrambled faces (sum the listed clocks, then reduce to −5…6). Turns tagged <em>intuitive</em> are done by eye: the text under them says which clocks to line up with which (e.g. <code>align C to U/L</code> means turn until C shows the same hour as U and L; a <em>block</em> is a group of clocks that already agree). The last pin state always just aligns everything to 12.</p>
+      <p>The small formula under each turn is what you would memorize to compute it from the scrambled faces (sum the listed clocks, then reduce to −5…6). Turns tagged <em>intuitive</em> are done by eye: the text under them says which clocks to line up with which (e.g. <code>align C to U/L</code> means turn until C shows the same hour as U and L; a <em>block</em> is a group of clocks that already agree). The last pin state always just aligns everything to 12. For the first six pin states the memo formula is shown in brackets after the alignment, in case you would rather compute it.</p>
+      <p><strong>x2 mode</strong> (switch at the top): for solvers who turn the clock over the horizontal axis to look at the back, so its dials are upside down. The back is drawn that way, its clocks are named by where they sit in that view, and the formulas are rewritten so that every value is read relative to you (12 at the top of your view). When a formula needs it, one front corner is read on the back instead (<code>DRb</code> is the UR corner seen on the back), which is what keeps the half-turn errors cancelling out.</p>
     </details>
   </section>
 
@@ -212,6 +226,8 @@
   const state = new Array(14).fill(0);
   // Off (default): the clock stays turned over after the scramble's y2, so the old back is shown as the front.
   let endFront = false;
+  // x2 mode: the back is viewed after turning the clock over the horizontal axis (upside down); shared with the finder
+  let x2 = false;
   const dials = [];
   const NS = "http://www.w3.org/2000/svg";
   const idx = (name) => Clock.CLOCKS.indexOf(name);
@@ -242,14 +258,18 @@
     container.appendChild(el);
 
     const i = idx(base);
-    const shown = () => (linked ? (12 - state[i]) % 12 : state[i]);
+    const back = container.id === "back";
+    const shown = () => (linked ? (12 - state[i]) % 12 : state[i]); // as the dial's printed face shows it
     const setShown = (hour) => { hour = ((hour % 12) + 12) % 12; state[i] = linked ? (12 - hour) % 12 : hour; setMsg("scrambleMsg", ""); render(); update(); };
+    // in x2 mode the back dials are drawn upside down, so what the viewer reads is 6 off the printed face
+    const view = () => (back && x2 ? (shown() + 6) % 12 : shown());
+    const setView = (hour) => setShown(back && x2 ? hour - 6 : hour);
     const fromPointer = (ev) => {
       const r = el.getBoundingClientRect();
       const dx = ev.clientX - (r.left + r.width / 2), dy = ev.clientY - (r.top + r.height / 2);
       if (dx * dx + dy * dy < 16) return; // ignore the very centre
       const deg = (Math.atan2(dx, -dy) * 180) / Math.PI;
-      setShown(Math.round(((deg + 360) % 360) / 30));
+      setView(Math.round(((deg + 360) % 360) / 30));
     };
     let dragging = false;
     el.addEventListener("pointerdown", (ev) => { dragging = true; el.setPointerCapture(ev.pointerId); el.focus(); fromPointer(ev); ev.preventDefault(); });
@@ -260,17 +280,17 @@
     el.addEventListener("keydown", (ev) => {
       if (ev.key === "ArrowUp" || ev.key === "ArrowRight") { setShown(shown() + 1); ev.preventDefault(); }
       else if (ev.key === "ArrowDown" || ev.key === "ArrowLeft") { setShown(shown() - 1); ev.preventDefault(); }
-      else if (/^[0-9]$/.test(ev.key)) { setShown(parseInt(ev.key, 10)); ev.preventDefault(); }
+      else if (/^[0-9]$/.test(ev.key)) { setView(parseInt(ev.key, 10)); ev.preventDefault(); }
       else if (ev.key === "Home") { setShown(0); ev.preventDefault(); }
     });
-    dials.push({ el, hand, hourLbl, shown });
+    dials.push({ el, hand, hourLbl, shown, view });
   }
   function render() {
     for (const d of dials) {
-      const hr = d.shown();
+      const hr = d.shown(), seen = d.view();
       d.hand.setAttribute("transform", "rotate(" + hr * 30 + " 50 50)");
-      d.el.setAttribute("aria-valuenow", hr);
-      d.hourLbl.textContent = hr === 0 ? "12" : hr;
+      d.el.setAttribute("aria-valuenow", seen);
+      d.hourLbl.textContent = seen === 0 ? "12" : seen;
     }
   }
   for (const n of FRONT_LAYOUT) buildDial($("front"), n);
@@ -297,14 +317,21 @@
     for (const up of pinsUp) { const s = document.createElement("span"); if (up) s.classList.add("up"); d.appendChild(s); }
     return d;
   }
-  function turnBlock(label, amount, formula, intuitive, align, cls) {
-    const t = document.createElement("div"); t.className = "turn " + cls;
+  function tag(cls, text, title) { const t = document.createElement("span"); t.className = "tag" + (cls ? " " + cls : ""); t.textContent = text; if (title) t.title = title; return t; }
+  // One wheel turn: side is "front" or "back", i is the pin state's position (0-6).
+  function turnBlock(label, side, st, i) {
+    const amount = st[side], intuitive = st[side + "Intuitive"], align = st[side + "Align"];
+    const formula = x2 ? st[side + "FormulaX2"] : st[side + "Formula"];
+    const t = document.createElement("div"); t.className = "turn " + side;
     const what = document.createElement("div"); what.className = "what"; what.textContent = label;
-    if (intuitive) { const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = "intuitive"; what.appendChild(tag); }
+    if (intuitive) what.appendChild(tag("", "intuitive"));
     const impossible = Clock.isFraction(amount);
-    if (impossible) { const tag = document.createElement("span"); tag.className = "tag bad"; tag.textContent = "impossible"; what.appendChild(tag); }
+    if (impossible) what.appendChild(tag("bad", "impossible"));
+    if (x2 && !st[side + "X2Exact"]) what.appendChild(tag("warn", "read printed 12", "This formula has thirds in it, so it cannot be read upside down: read the back dials by their printed numbers (the 12 is at the bottom)."));
     const num = document.createElement("div"); num.className = "num" + (amount === 0 ? " zero" : impossible ? " impossible" : ""); num.textContent = Clock.formatTurn(amount);
-    const f = document.createElement("div"); f.className = "formula"; f.textContent = intuitive ? align : formula;
+    const f = document.createElement("div"); f.className = "formula";
+    if (!intuitive) f.textContent = formula;
+    else { f.textContent = align; if (i < 6) { const m = document.createElement("span"); m.className = "memo"; m.textContent = " (" + formula + ")"; f.appendChild(m); } }
     t.append(what, num, f); return t;
   }
 
@@ -315,6 +342,7 @@
     if (text) p.set("scramble", text);
     if (state.some((h) => h !== 0)) p.set("state", state.join(","));
     if (endFront) p.set("front", "1");
+    if (x2) p.set("x2", "1");
     p.set("order", getOrder().map(Clock.pinLabel).join(" "));
     const qs = p.toString();
     history.replaceState(null, "", qs ? "?" + qs : location.pathname);
@@ -343,9 +371,8 @@
     for (const st of sol.steps) {
       const row = document.createElement("div"); row.className = "step";
       const name = document.createElement("div"); name.className = "name"; name.textContent = Clock.pinLabel(st.pin);
-      row.append(pinDiagram(st.pinsUp), name,
-        turnBlock("Front move", st.front, st.frontFormula, st.frontIntuitive, st.frontAlign, "front"),
-        turnBlock("Back move", st.back, st.backFormula, st.backIntuitive, st.backAlign, "back"));
+      const i = sol.steps.indexOf(st);
+      row.append(pinDiagram(st.pinsUp), name, turnBlock("Front move", "front", st, i), turnBlock("Back move", "back", st, i));
       steps.appendChild(row);
       parts.push(Clock.pinLabel(st.pin) + " " + Clock.formatTurn(st.front) + "/" + Clock.formatTurn(st.back));
     }
@@ -378,11 +405,34 @@
   // Turning the switch turns the clock over: the two faces swap, and the solution is redone for the new front.
   $("endFront").addEventListener("click", () => {
     endFront = !endFront; renderSwitch();
-    setState(Clock.flipState(getState()));
-    setMsg("scrambleMsg", "Clock turned over: the scramble now ends on the " + (endFront ? "front" : "back") + ".", "ok");
-    update();
+    const faces = document.querySelector(".faces");
+    const turn = () => {
+      setState(Clock.flipState(getState()));
+      setMsg("scrambleMsg", "Clock turned over: the scramble now ends on the " + (endFront ? "front" : "back") + ".", "ok");
+      update();
+    };
+    // animate the puzzle turning over; the faces swap at the half-way point (x2's 180° applies on top of the result)
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches || faces.classList.contains("turning")) { turn(); return; }
+    faces.classList.add("turning");
+    setTimeout(turn, 300);
+    const done = () => faces.classList.remove("turning");
+    faces.addEventListener("animationend", done, { once: true });
+    setTimeout(done, 700); // in case the animation never runs (hidden tab, odd browser)
   });
   $("endFrontLbl").addEventListener("click", () => $("endFront").click());
+  // x2 mode: remembered across pages (localStorage) and in the URL (x2=1)
+  function renderX2() {
+    $("x2").setAttribute("aria-checked", x2 ? "true" : "false");
+    $("back").classList.toggle("x2", x2);
+    $("backTitle").textContent = x2 ? "Back (x2, 12 bottom)" : "Back (y2, 12 top)";
+    render();
+  }
+  $("x2").addEventListener("click", () => {
+    x2 = !x2;
+    try { localStorage.setItem("clock7.x2", x2 ? "1" : "0"); } catch (e) {}
+    renderX2(); update();
+  });
+  $("x2Lbl").addEventListener("click", () => $("x2").click());
   for (const b of document.querySelectorAll(".presets button")) b.addEventListener("click", () => { setOrder(b.dataset.order.split(" ")); update(); });
 
   // initial order: from the URL (?order=dl+R+DR+…, as linked from the pin order finder), else last used, else Tommy's
@@ -394,6 +444,10 @@
   setOrder(initial.split(" "));
   // ?front=1 keeps the original front as the front after the scramble (default: the clock stays turned over)
   endFront = params.get("front") === "1"; renderSwitch();
+  // ?x2=1 (or the remembered setting) shows the back as seen after an x2
+  let x2Saved = null; try { x2Saved = localStorage.getItem("clock7.x2"); } catch (e) {}
+  x2 = params.has("x2") ? params.get("x2") === "1" : x2Saved === "1"; renderX2();
+  if (params.has("x2")) { try { localStorage.setItem("clock7.x2", x2 ? "1" : "0"); } catch (e) {} } // a shared link sets it for the finder too
   // faces: ?state=14 hours (dials as last set) wins over ?scramble=, which is applied fresh
   const q = params.get("scramble");
   if (q) $("scramble").value = q;
