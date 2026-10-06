@@ -10,28 +10,28 @@
 <script src="theme.js"></script>
 <style>
   :root {
-    --bg: #f6f5f1; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #dcdad3;
+    --bg: #f0f0f5; --card: #ffffff; --ink: #1d1d1b; --muted: #66666b; --line: #797980;
     --accent: #1f5f8b; --accent-ink: #ffffff; --ok: #2e7d4f; --warn: #a2620b; --bad: #b3261e;
-    --pin-up: #1d1d1b; --pin-down: #d7d5cd; --chip: #eef1f4; --intuitive: #e8f3ec; --intuitive-ink: #2e7d4f;
+    --pin-up: #1d1d1b; --pin-down: #cbcbd6; --chip: #f0f0f5; --intuitive: #e8f3ec; --intuitive-ink: #2e7d4f;
     --exclude: #f8e5e3; --exclude-ink: #b3261e;
-    --radius: 12px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --radius: 0px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #343537;
+      --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #6d6f73;
       --accent: #6fb1e0; --accent-ink: #0f1a22; --ok: #6cc38f; --warn: #e0a24a; --bad: #ef7a73;
       --pin-up: #ecebe6; --pin-down: #3b3c3e; --chip: #2a2c2e; --intuitive: #1d3327; --intuitive-ink: #8fd4ab;
       --exclude: #3a2322; --exclude-ink: #ef7a73;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #343537;
+    --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #6d6f73;
     --accent: #6fb1e0; --accent-ink: #0f1a22; --ok: #6cc38f; --warn: #e0a24a; --bad: #ef7a73;
     --pin-up: #ecebe6; --pin-down: #3b3c3e; --chip: #2a2c2e; --intuitive: #1d3327; --intuitive-ink: #8fd4ab;
     --exclude: #3a2322; --exclude-ink: #ef7a73;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Times New Roman", Times, serif; }
   main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
   h1 { font-size: 1.6rem; margin: 0 0 4px; }
   h2 { font-size: 1.05rem; margin: 0 0 12px; }
@@ -99,7 +99,7 @@
 </head>
 <body>
 <main>
-  <nav><a href="index.html">Solver</a> · <strong>Pin order finder</strong><span class="spacer"></span><span class="msg" id="shareMsg"></span><button class="small" id="share" title="Copy a link to these filters and this sort">Share link</button><button class="theme" id="theme" role="switch" aria-label="Dark theme"><span class="sun">☀️</span><span class="moon">🌕</span><span class="knob"></span></button></nav>
+  <nav><a href="index.html">Solver</a> · <strong>Pin order finder</strong><span class="spacer"></span><span class="msg" id="shareMsg"></span><button class="small" id="share" title="Copy a link to these filters and this sort">Copy link</button><button class="theme" id="theme" role="switch" aria-label="Dark theme"><span class="sun">☀</span><span class="moon">☾</span><span class="knob"></span></button></nav>
   <h1>Clock Pin Order Finder</h1>
   <p class="lede">All 1,370,880 orderings of the 272 working 7-simul pin sets. Narrow them down, sort, and open any order in the solver.</p>
 
