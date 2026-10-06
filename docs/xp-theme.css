@@ -1,0 +1,214 @@
+/*
+ * Windows XP look for the 7sith pages, on top of vendor/xp/XP.css.
+ *
+ * Everything that is ours lives here: the desktop, the taskbar with Start menu and tray,
+ * window behaviour classes (minimized / maximized), message-box style messages, and a
+ * "Royale Noir" dark variant. Light values match XP.css's own Luna colours; dark mode only
+ * swaps the variables below, so every rule reads from a variable.
+ */
+
+:root {
+  --desk: #3a6ea5; --desk-hi: #5d95cf; --desk-lo: #2b5a8c;
+  --ink: #222; --muted: #5b5b5b; --accent: #0046d5; --link: #0046d5;
+  --ok: #1a7f37; --warn: #9a5b00; --bad: #c42b1c;
+  --panel: #fff; --line: #7f9db9; --chip: #ece9d8; --dial: #fff;
+  --pin-up: #222; --pin-down: #cfcfc4; --intuitive: #dff3e3; --intuitive-ink: #1a7f37; --exclude: #f8dcd8; --exclude-ink: #c42b1c;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --ui: Tahoma, "Trebuchet MS", "Pixelated MS Sans Serif", Arial, sans-serif;
+
+  --win-bg: #ece9d8;
+  --win-frame: inset -1px -1px #00138c, inset 1px 1px #0831d9, inset -2px -2px #001ea0, inset 2px 2px #166aee, inset -3px -3px #003bda, inset 3px 3px #0855dd;
+  --title-grad: linear-gradient(180deg, #0997ff, #0053ee 8%, #0050ee 40%, #06f 88%, #06f 93%, #005bff 95%, #003dd7 96%, #003dd7);
+  --title-border: #0831d9; --title-border-r: #001ea0; --title-ink: #fff; --title-shadow: 1px 1px #0f1089; --title-btn: #0050ee;
+  --btn-grad: linear-gradient(180deg, #fff, #ecebe5 86%, #d8d0c4); --btn-border: #003c74; --btn-ink: #222;
+  --field-bg: #fff; --field-border: #7f9db9; --field-ink: #222;
+  --fieldset-bg: #fff; --fieldset-border: #d0d0bf; --legend: #0046d5;
+  --status-shadow: inset 0 1px 2px grey; --status-sep: rgba(208, 206, 191, 0.75);
+  --taskbar-grad: linear-gradient(180deg, #3168d5 0%, #4993f6 4%, #245edb 9%, #245edb 90%, #1941a5 100%); --taskbar-top: #0b2f8a;
+  --start-grad: linear-gradient(180deg, #5ec24a 0%, #3f9f2f 12%, #318a27 55%, #2b7d22 90%, #246b1c 100%); --start-border: #1f5b17;
+  --task-grad: linear-gradient(180deg, #3c81f3, #2a6ee0); --task-border: #1a4aa8; --task-active: linear-gradient(180deg, #1b4fb6, #1f55c4);
+  --tray-grad: linear-gradient(180deg, #1290f6 0%, #19a2ff 4%, #0f85e8 9%, #0f85e8 90%, #0a5fbf 100%); --tray-border: #0a5fbf;
+  --menu-bg: #fff; --menu-ink: #222; --menu-head: linear-gradient(180deg, #1c5fd6, #2f7be8 40%, #1c5fd6); --menu-hover: #316ac5; --menu-foot: #d3e5fa;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --desk: #1b1f27; --desk-hi: #2d3443; --desk-lo: #12151b;
+    --ink: #e6e6e6; --muted: #a9a9a9; --accent: #6fb1e0; --link: #8ab4f8;
+    --ok: #6cc38f; --warn: #e0a24a; --bad: #ef7a73;
+    --panel: #1e2128; --line: #5a5f6a; --chip: #2a2d35; --dial: #2a2d35;
+    --pin-up: #e6e6e6; --pin-down: #4a4e58; --intuitive: #1d3327; --intuitive-ink: #8fd4ab; --exclude: #3a2322; --exclude-ink: #ef7a73;
+    --win-bg: #2b2d31;
+    --win-frame: inset -1px -1px #000, inset 1px 1px #4a4e5a, inset -2px -2px #0d0e11, inset 2px 2px #3a3d46, inset -3px -3px #16181d, inset 3px 3px #2f323a;
+    --title-grad: linear-gradient(180deg, #5a5f6c, #2e313a 8%, #2a2d35 40%, #23262d 88%, #1d1f25 96%, #1d1f25);
+    --title-border: #4a4e5a; --title-border-r: #0d0e11; --title-ink: #f1f1f1; --title-shadow: 1px 1px #000; --title-btn: #2a2d35; --title-btn-filter: grayscale(1) brightness(0.9) contrast(1.1);
+    --btn-grad: linear-gradient(180deg, #4b4f59, #33363e 86%, #282a30); --btn-border: #15171b; --btn-ink: #eee;
+    --field-bg: #1e2128; --field-border: #555a64; --field-ink: #eee;
+    --fieldset-bg: #24262c; --fieldset-border: #44474f; --legend: #8ab4f8;
+    --status-shadow: inset 0 1px 2px #000; --status-sep: #3a3d45;
+    --taskbar-grad: linear-gradient(180deg, #2a2d35 0%, #3a3e49 4%, #1b1d23 9%, #1b1d23 90%, #0b0c0f 100%); --taskbar-top: #000;
+    --start-grad: linear-gradient(180deg, #4c9c3e 0%, #2f7a27 12%, #276a21 55%, #215c1b 90%, #1a4a16 100%); --start-border: #123a10;
+    --task-grad: linear-gradient(180deg, #3a3e49, #2a2d35); --task-border: #0b0c0f; --task-active: linear-gradient(180deg, #16181d, #1d1f25);
+    --tray-grad: linear-gradient(180deg, #2f323a 0%, #3a3e49 4%, #23262d 9%, #23262d 90%, #0b0c0f 100%); --tray-border: #0b0c0f;
+    --menu-bg: #23262e; --menu-ink: #eee; --menu-head: linear-gradient(180deg, #2f323a, #3a3e49 40%, #2f323a); --menu-hover: #3b5b9a; --menu-foot: #1b1d23;
+  }
+}
+:root[data-theme="dark"] {
+  --desk: #1b1f27; --desk-hi: #2d3443; --desk-lo: #12151b;
+  --ink: #e6e6e6; --muted: #a9a9a9; --accent: #6fb1e0; --link: #8ab4f8;
+  --ok: #6cc38f; --warn: #e0a24a; --bad: #ef7a73;
+  --panel: #1e2128; --line: #5a5f6a; --chip: #2a2d35; --dial: #2a2d35;
+  --pin-up: #e6e6e6; --pin-down: #4a4e58; --intuitive: #1d3327; --intuitive-ink: #8fd4ab; --exclude: #3a2322; --exclude-ink: #ef7a73;
+  --win-bg: #2b2d31;
+  --win-frame: inset -1px -1px #000, inset 1px 1px #4a4e5a, inset -2px -2px #0d0e11, inset 2px 2px #3a3d46, inset -3px -3px #16181d, inset 3px 3px #2f323a;
+  --title-grad: linear-gradient(180deg, #5a5f6c, #2e313a 8%, #2a2d35 40%, #23262d 88%, #1d1f25 96%, #1d1f25);
+  --title-border: #4a4e5a; --title-border-r: #0d0e11; --title-ink: #f1f1f1; --title-shadow: 1px 1px #000; --title-btn: #2a2d35; --title-btn-filter: grayscale(1) brightness(0.9) contrast(1.1);
+  --btn-grad: linear-gradient(180deg, #4b4f59, #33363e 86%, #282a30); --btn-border: #15171b; --btn-ink: #eee;
+  --field-bg: #1e2128; --field-border: #555a64; --field-ink: #eee;
+  --fieldset-bg: #24262c; --fieldset-border: #44474f; --legend: #8ab4f8;
+  --status-shadow: inset 0 1px 2px #000; --status-sep: #3a3d45;
+  --taskbar-grad: linear-gradient(180deg, #2a2d35 0%, #3a3e49 4%, #1b1d23 9%, #1b1d23 90%, #0b0c0f 100%); --taskbar-top: #000;
+  --start-grad: linear-gradient(180deg, #4c9c3e 0%, #2f7a27 12%, #276a21 55%, #215c1b 90%, #1a4a16 100%); --start-border: #123a10;
+  --task-grad: linear-gradient(180deg, #3a3e49, #2a2d35); --task-border: #0b0c0f; --task-active: linear-gradient(180deg, #16181d, #1d1f25);
+  --tray-grad: linear-gradient(180deg, #2f323a 0%, #3a3e49 4%, #23262d 9%, #23262d 90%, #0b0c0f 100%); --tray-border: #0b0c0f;
+  --menu-bg: #23262e; --menu-ink: #eee; --menu-head: linear-gradient(180deg, #2f323a, #3a3e49 40%, #2f323a); --menu-hover: #3b5b9a; --menu-foot: #1b1d23;
+}
+
+/* ---------- desktop ---------- */
+* { box-sizing: border-box; }
+html { min-height: 100%; }
+body {
+  margin: 0; min-height: 100vh; padding-bottom: 46px;
+  background: var(--desk) radial-gradient(ellipse at 28% 18%, var(--desk-hi) 0%, var(--desk) 50%, var(--desk-lo) 100%) fixed;
+  color: var(--ink); font-family: var(--ui); font-size: 13px; line-height: 1.45;
+}
+main.desktop { max-width: 1100px; margin: 0 auto; padding: 20px 16px 24px; }
+.desk-title { display: flex; align-items: center; gap: 8px; font: bold 22px/1.2 "Trebuchet MS", Tahoma, Arial, sans-serif; color: #fff; text-shadow: 1px 1px 2px #0b2a52; margin: 0 0 4px; }
+.desk-title .ico { width: 24px; height: 24px; }
+.lede { color: #e8f0fb; text-shadow: 1px 1px 1px #0b2a52; margin: 0 0 16px; }
+.desk-footer { color: #dbe7f7; text-shadow: 1px 1px 1px #0b2a52; font-size: 12px; margin-top: 20px; }
+.desk-footer a { color: #fff; }
+.ico { width: 16px; height: 16px; display: inline-block; vertical-align: middle; }
+a { color: var(--link); }
+code { font-family: var(--mono); font-size: 0.95em; }
+h1, h2, h3 { font-size: inherit; margin: 0; }
+
+/* ---------- windows ---------- */
+.window { background: var(--win-bg); box-shadow: var(--win-frame); color: var(--ink); display: flex; flex-direction: column; min-width: 0; }
+.window[hidden] { display: none; }
+.window-body { margin: 10px; font-size: 13px; }
+.title-bar { background: var(--title-grad); border-top-color: var(--title-border); border-left-color: var(--title-border); border-right-color: var(--title-border-r); user-select: none; }
+.title-bar-text { color: var(--title-ink); text-shadow: var(--title-shadow); display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.title-bar-controls button { background-color: var(--title-btn); filter: var(--title-btn-filter, none); }
+.window.minimized .window-body, .window.minimized .status-bar, .window.minimized fieldset.outside { display: none; }
+.window.maximized { position: fixed; inset: 0 0 30px 0; z-index: 40; border-radius: 0; margin: 0; }
+.window.maximized .title-bar { border-radius: 0; }
+.window.maximized .window-body { flex: 1; overflow: auto; }
+.status-bar { box-shadow: var(--status-shadow); }
+.status-bar-field { border-right-color: var(--status-sep); border-left-color: transparent; font-family: var(--ui); font-size: 12px; color: var(--ink); min-height: 1.4em; }
+.status-bar-field.msg { margin: 0; }
+fieldset { background: var(--fieldset-bg); border-color: var(--fieldset-border); color: var(--ink); }
+legend { color: var(--legend); font-weight: bold; }
+.window fieldset { margin-bottom: 8px; }
+
+/* ---------- controls ---------- */
+button { font-family: var(--ui); font-size: 12px; background: var(--btn-grad); border-color: var(--btn-border); color: var(--btn-ink); cursor: pointer; }
+button:not(:disabled):hover { box-shadow: inset -1px 1px #fff0cf, inset 1px 2px #fdd889, inset -2px 2px #fbc761, inset 2px -2px #e5a01a; }
+button.btn-default { box-shadow: inset 0 0 0 1px #4a9cf6, inset 0 0 0 2px #cfe4ff; }
+button.small { min-width: 0; padding: 0 8px; }
+label { font-family: var(--ui); font-size: 12px; color: var(--ink); }
+textarea, input[type="text"], input[type="number"], select {
+  font-family: var(--ui); font-size: 12px; color: var(--field-ink); background-color: var(--field-bg); border: 1px solid var(--field-border); border-radius: 0; box-sizing: border-box;
+}
+input[type="number"] { padding: 3px 4px; height: 21px; line-height: 2; -webkit-appearance: none; appearance: none; width: 100%; }
+textarea { width: 100%; min-height: 56px; resize: vertical; font-family: var(--mono); line-height: 1.4; padding: 4px 5px; }
+select { height: 21px; padding: 2px 24px 2px 4px; background-position: top 2px right 2px; background-size: 15px; }
+.field-row-stacked label { display: block; margin-bottom: 3px; }
+.field-row-stacked + .field-row-stacked, .nums .field-row-stacked, .pos .field-row-stacked, .sortrow .field-row-stacked { margin-top: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+.row .msg { margin: 0; }
+details { margin-top: 10px; }
+details summary { cursor: pointer; color: var(--link); text-decoration: underline; }
+details p { margin: 6px 0; }
+progress { width: 100%; height: 16px; }
+progress::-webkit-progress-bar { background: #fff; }
+progress::-webkit-progress-value { background: repeating-linear-gradient(90deg, #2bd42b 0 8px, transparent 8px 10px); }
+progress::-moz-progress-bar { background: repeating-linear-gradient(90deg, #2bd42b 0 8px, transparent 8px 10px); }
+
+/* XP message-box style messages: an icon square followed by the text */
+.msg { font-size: 12px; min-height: 1.4em; margin-top: 6px; display: flex; gap: 6px; align-items: flex-start; }
+.msg.ok, .msg.warn, .msg.bad { font-weight: normal; }
+.msg.ok::before, .msg.warn::before, .msg.bad::before {
+  content: "i"; flex: none; width: 15px; height: 15px; margin-top: 1px; border-radius: 50%; text-align: center;
+  font: bold 11px/15px Georgia, serif; color: #fff; background: #1b62d8; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);
+}
+.msg.warn::before { content: "!"; background: #f4c20d; color: #222; border-radius: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); line-height: 20px; height: 16px; }
+.msg.bad::before { content: "×"; background: #d9262a; font-family: var(--ui); line-height: 14px; }
+.msg.ok { color: var(--ok); } .msg.warn { color: var(--warn); } .msg.bad { color: var(--bad); }
+.muted { color: var(--muted); }
+
+/* ---------- taskbar ---------- */
+.taskbar {
+  position: fixed; left: 0; right: 0; bottom: 0; height: 30px; z-index: 60;
+  display: flex; align-items: stretch; background: var(--taskbar-grad); border-top: 1px solid var(--taskbar-top);
+  font-family: var(--ui); color: #fff;
+}
+.start {
+  min-width: 0; min-height: 0; height: 30px; margin: 0; padding: 0 20px 0 10px; border: none; border-radius: 0 10px 10px 0;
+  background: var(--start-grad); color: #fff; font: italic bold 16px/30px "Trebuchet MS", Tahoma, Arial, sans-serif; text-shadow: 1px 1px 1px #123a10;
+  box-shadow: inset 1px 1px 0 #8fd978, 2px 0 4px rgba(0,0,0,0.35); display: flex; align-items: center; gap: 6px;
+}
+.start:not(:disabled):hover { box-shadow: inset 1px 1px 0 #8fd978, inset 0 0 12px #7ddd62, 2px 0 4px rgba(0,0,0,0.35); }
+.start[aria-expanded="true"] { background: linear-gradient(180deg, #2b7d22, #1f5b17); box-shadow: inset 2px 2px 4px rgba(0,0,0,0.4); }
+.flag { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; width: 18px; height: 16px; transform: skewX(-8deg); }
+.flag i { display: block; border-radius: 2px; }
+.flag i:nth-child(1) { background: #f35325; } .flag i:nth-child(2) { background: #81bc06; } .flag i:nth-child(3) { background: #05a6f0; } .flag i:nth-child(4) { background: #ffba08; }
+.tasks { display: flex; align-items: center; gap: 3px; padding: 0 6px; flex: 1; min-width: 0; overflow: hidden; }
+.taskbtn {
+  display: inline-flex; align-items: center; gap: 6px; height: 22px; min-width: 0; padding: 0 10px; border-radius: 3px; border: 1px solid var(--task-border);
+  background: var(--task-grad); color: #fff; text-decoration: none; font: 12px/1 var(--ui); white-space: nowrap; box-shadow: inset 1px 1px #5c9bf5; cursor: pointer;
+}
+.taskbtn:hover { filter: brightness(1.08); }
+.taskbtn.active { background: var(--task-active); box-shadow: inset 1px 1px 3px rgba(0,0,0,0.5); font-weight: bold; }
+.taskbtn .ico { width: 16px; height: 16px; }
+.taskbtn .glyph { font-size: 14px; line-height: 1; width: auto; }
+.tray { display: flex; align-items: center; gap: 10px; padding: 0 10px 0 12px; background: var(--tray-grad); border-left: 1px solid var(--tray-border); box-shadow: inset 1px 0 #3fb3ff; }
+.clock { font: 12px/1 var(--ui); color: #fff; text-shadow: 1px 1px 1px rgba(0,0,0,0.4); min-width: 38px; text-align: center; }
+@media (max-width: 560px) {
+  .taskbtn span.label { display: none; }
+  .taskbtn { padding: 0 8px; }
+  .start { padding-right: 14px; }
+}
+
+/* theme switch (lives in the tray) */
+.theme { position: relative; display: inline-flex; align-items: center; width: 46px; height: 20px; min-width: 0; min-height: 0; padding: 0; border-radius: 999px; background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.5); box-shadow: none; cursor: pointer; }
+.theme:not(:disabled):hover { box-shadow: 0 0 0 1px rgba(255,255,255,0.4); }
+.theme span { position: relative; z-index: 1; width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 12px; line-height: 1; color: #fff; opacity: 0.45; transition: opacity 0.2s; }
+.theme .knob { position: absolute; z-index: 0; top: 50%; left: 1px; width: 18px; height: 18px; opacity: 1; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.4); transform: translate(0, -50%); transition: transform 0.2s; }
+.theme[data-theme="dark"] .knob { transform: translate(25px, -50%); background: #3a3e49; }
+.theme[data-theme="light"] .sun { color: #f4a300; } .theme[data-theme="dark"] .moon { color: #ffe9a8; }
+.theme[data-theme="light"] .sun, .theme[data-theme="dark"] .moon { opacity: 1; }
+
+/* ---------- start menu ---------- */
+.startmenu {
+  position: fixed; left: 0; bottom: 30px; width: 320px; max-width: calc(100vw - 8px); z-index: 70;
+  background: var(--menu-bg); color: var(--menu-ink); border: 2px solid #1b4fb6; border-bottom: none; border-radius: 8px 8px 0 0;
+  box-shadow: 3px -2px 10px rgba(0,0,0,0.45); font-family: var(--ui); overflow: hidden;
+}
+.startmenu[hidden] { display: none; }
+.startmenu .head { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--menu-head); color: #fff; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 1px #0b2a52; }
+.startmenu .head .ico { width: 36px; height: 36px; border: 2px solid #fff; border-radius: 4px; background: #fff; }
+.startmenu ul { list-style: none; margin: 0; padding: 6px 0; }
+.startmenu li a, .startmenu li button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 0; padding: 7px 12px; border: none; border-radius: 0; background: none; box-shadow: none; color: inherit; text-decoration: none; font: 13px var(--ui); text-align: left; cursor: pointer; }
+.startmenu li a:hover, .startmenu li button:hover, .startmenu li a:focus, .startmenu li button:focus { background: var(--menu-hover); color: #fff; box-shadow: none; outline: none; }
+.startmenu li a .ico, .startmenu li button .ico { width: 22px; height: 22px; }
+.startmenu li a .glyph, .startmenu li button .glyph { font-size: 18px; width: 22px; text-align: center; }
+.startmenu li.sep { height: 1px; margin: 4px 10px; background: var(--fieldset-border); }
+.startmenu .sub { display: block; font-size: 11px; color: var(--muted); }
+.startmenu li a:hover .sub, .startmenu li button:hover .sub { color: #e8f0fb; }
+.startmenu .foot { padding: 6px 10px; background: var(--menu-foot); font-size: 11px; color: var(--muted); }
+
+/* ---------- about window ---------- */
+.window.about { position: fixed; z-index: 80; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 360px; max-width: calc(100vw - 16px); }
+.window.about .window-body { display: flex; gap: 12px; }
+.window.about .window-body img { width: 48px; height: 48px; }
+.window.about p { margin: 0 0 6px; }

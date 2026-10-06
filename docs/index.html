@@ -8,63 +8,27 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="favicon.png">
 <script src="theme.js"></script>
+<link rel="stylesheet" href="vendor/xp/XP.css">
+<link rel="stylesheet" href="xp-theme.css">
 <style>
-  :root {
-    --bg: #f0f0f5; --card: #ffffff; --ink: #1d1d1b; --muted: #66666b; --line: #797980;
-    --accent: #1f5f8b; --accent-ink: #ffffff; --ok: #2e7d4f; --warn: #a2620b; --bad: #b3261e;
-    --pin-up: #1d1d1b; --pin-down: #cbcbd6; --chip: #f0f0f5; --dial: #e8e8fa; --intuitive: #e8f3ec; --intuitive-ink: #2e7d4f;
-    --radius: 0px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #6d6f73;
-      --accent: #6fb1e0; --accent-ink: #0f1a22; --ok: #6cc38f; --warn: #e0a24a; --bad: #ef7a73;
-      --pin-up: #ecebe6; --pin-down: #3b3c3e; --chip: #2a2c2e; --dial: #26272a; --intuitive: #1d3327; --intuitive-ink: #8fd4ab;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #141515; --card: #1e1f20; --ink: #ecebe6; --muted: #9c9b95; --line: #6d6f73;
-    --accent: #6fb1e0; --accent-ink: #0f1a22; --ok: #6cc38f; --warn: #e0a24a; --bad: #ef7a73;
-    --pin-up: #ecebe6; --pin-down: #3b3c3e; --chip: #2a2c2e; --dial: #26272a; --intuitive: #1d3327; --intuitive-ink: #8fd4ab;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Times New Roman", Times, serif; }
-  main { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
-  h1 { font-size: 1.6rem; margin: 0 0 4px; }
-  h2 { font-size: 1.05rem; margin: 0 0 12px; }
-  .lede { color: var(--muted); margin: 0 0 20px; }
-  .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
-  /* Desktop: scramble and pin order stacked on the left, the two faces side by side on the right. */
+  /* layout only; the look comes from vendor/xp/XP.css + xp-theme.css */
+  .grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
   @media (min-width: 900px) {
     .grid.two { grid-template-columns: minmax(0, 1fr) 500px; }
-    .col { display: grid; gap: 16px; align-content: start; container-type: inline-size; }
-    /* The faces card is as tall as the left column; keep the dials centred in it. */
-    .faces-card { display: flex; flex-direction: column; }
+    .col { display: grid; gap: 14px; align-content: start; container-type: inline-size; }
+    .faces-card .window-body { flex: 1; display: flex; flex-direction: column; }
     .faces-card .faces { flex: 1; justify-content: center; align-items: center; align-content: center; }
-    .faces-card .msg { text-align: center; }
     @container (max-width: 430px) { .pins { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
   }
-  /* Narrow: one column in reading order scramble, faces, pin order. */
   @media (max-width: 899px) {
     .col { display: contents; }
     .scramble-card { order: 1; } .faces-card { order: 2; } .pin-card { order: 3; }
   }
-  section.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
-  label { font-size: 0.85rem; color: var(--muted); }
-  textarea, input[type=number], select {
-    font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
-  }
-  textarea { width: 100%; min-height: 64px; resize: vertical; font-family: var(--mono); font-size: 0.95rem; }
-  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
-  button { font: inherit; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); padding: 8px 14px; cursor: pointer; }
-  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-  button:hover { filter: brightness(0.96); }
-  .msg { font-size: 0.9rem; margin-top: 8px; min-height: 1.2em; }
-  .msg.bad { color: var(--bad); } .msg.warn { color: var(--warn); } .msg.ok { color: var(--ok); }
+  .solution-card { margin-top: 14px; }
 
-  .faces { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .faces { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; justify-content: center; }
   .face { text-align: center; }
-  .face .title { font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
+  .face .title { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
   .clockgrid { display: grid; grid-template-columns: repeat(3, 68px); gap: 6px; }
   @media (max-width: 400px) { .clockgrid { grid-template-columns: repeat(3, 58px); } }
   .dial { position: relative; width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; touch-action: none; outline: none; }
@@ -78,119 +42,153 @@
   .dial.linked .face-bg { fill: var(--chip); stroke-dasharray: 3 3; }
   .dial.linked .hand { stroke: var(--muted); }
   .dial.linked .hub { fill: var(--muted); }
-  .dial .lbl { position: absolute; left: 6px; top: 2px; font-size: 0.6rem; color: var(--muted); pointer-events: none; }
-  .dial .hour { position: absolute; right: 6px; bottom: 1px; font-size: 0.6rem; color: var(--muted); font-family: var(--mono); pointer-events: none; }
+  .dial .lbl { position: absolute; left: 6px; top: 2px; font-size: 9px; color: var(--muted); pointer-events: none; }
+  .dial .hour { position: absolute; right: 6px; bottom: 1px; font-size: 9px; color: var(--muted); font-family: var(--mono); pointer-events: none; }
 
-  .pins { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-  .pins select { width: 100%; padding: 8px 4px; text-align: center; }
+  .pins { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+  .pins select { width: 100%; padding: 2px 16px 2px 4px; text-align: center; font-family: var(--mono); }
   @media (max-width: 560px) { .pins { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-  .presets button { padding: 6px 10px; font-size: 0.9rem; }
+  .presets { margin-top: 0; }
+  .presets button { min-width: 0; padding: 0 10px; }
 
-  .steps { display: grid; gap: 10px; }
-  .step { display: grid; grid-template-columns: 44px 56px 1fr 1fr; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
-  @media (max-width: 560px) { .step { grid-template-columns: 44px 48px 1fr; } .step .back { grid-column: 3; } }
-  .pindiag { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 36px; }
-  .pindiag span { width: 14px; height: 14px; border-radius: 50%; background: var(--pin-down); display: block; }
+  .list { background: var(--panel); border: 1px solid var(--line); padding: 4px 6px; }
+  .step { display: grid; grid-template-columns: 40px 44px 1fr 1fr; gap: 10px; align-items: center; padding: 7px 4px; border-bottom: 1px dotted var(--line); }
+  .step:last-child { border-bottom: none; }
+  @media (max-width: 560px) { .step { grid-template-columns: 40px 40px 1fr; } .step .back { grid-column: 3; } }
+  .pindiag { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; width: 31px; }
+  .pindiag span { width: 14px; height: 14px; border-radius: 50%; background: var(--pin-down); display: block; border: 1px solid var(--line); }
   .pindiag span.up { background: var(--pin-up); }
-  .step .name { font-weight: 600; font-size: 1.1rem; }
-  .step .num { font-weight: 600; font-family: var(--mono); font-size: 1.2rem; }
-  .step .num.zero { color: var(--muted); font-weight: 400; }
+  .step .name { font-weight: bold; font-size: 15px; font-family: var(--mono); }
+  .step .num { font-weight: bold; font-family: var(--mono); font-size: 16px; }
+  .step .num.zero { color: var(--muted); font-weight: normal; }
   .step .num.impossible { color: var(--bad); }
-  .tag.bad { background: var(--exclude, #f8e5e3); color: var(--bad); }
-  .turn .what { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
-  .turn .formula { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); word-break: break-word; }
-  .tag { display: inline-block; font-size: 0.7rem; padding: 1px 6px; border-radius: 999px; background: var(--intuitive); color: var(--intuitive-ink); margin-left: 4px; vertical-align: middle; }
-  .summary { font-family: var(--mono); background: var(--chip); border-radius: 8px; padding: 10px 12px; margin-top: 12px; word-break: break-word; }
-  .stats { color: var(--muted); font-size: 0.85rem; margin-top: 8px; }
-  details { margin-top: 16px; }
-  details summary { cursor: pointer; color: var(--muted); }
-  details p { margin: 6px 0; font-size: 0.9rem; }
-  nav { font-size: 0.9rem; color: var(--muted); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  nav a { color: var(--accent); }
-  nav strong { color: var(--ink); }
-  nav .spacer { flex: 1; }
-  nav button { padding: 5px 10px; font-size: 0.85rem; }
-  nav .msg { margin: 0; min-height: 0; }
-  nav .theme { position: relative; display: inline-flex; align-items: center; width: 60px; height: 28px; padding: 0; border-radius: 999px; background: var(--chip); border: 1px solid var(--line); cursor: pointer; }
-  nav .theme span { position: relative; z-index: 1; width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 15px; line-height: 1; opacity: 0.4; transition: opacity 0.2s; }
-  nav .theme .knob { position: absolute; z-index: 0; top: 50%; left: 2px; width: 25px; height: 25px; opacity: 1; border-radius: 50%; background: var(--card); border: 1px solid var(--line); transform: translate(0, -50%); transition: transform 0.2s; }
-  nav .theme[data-theme="dark"] .knob { transform: translate(29px, -50%); }
-  nav .theme[data-theme="light"] .sun, nav .theme[data-theme="dark"] .moon { opacity: 1; }
-  footer { color: var(--muted); font-size: 0.8rem; margin-top: 32px; }
-  footer a { color: inherit; }
+  .turn .what { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .turn .formula { font-family: var(--mono); font-size: 11px; color: var(--muted); word-break: break-word; }
+  .tag { display: inline-block; font-size: 10px; padding: 0 5px; border: 1px solid var(--intuitive-ink); background: var(--intuitive); color: var(--intuitive-ink); margin-left: 4px; vertical-align: middle; text-transform: none; letter-spacing: 0; }
+  .tag.bad { background: var(--exclude); color: var(--exclude-ink); border-color: var(--exclude-ink); }
+  .summary { font-family: var(--mono); font-size: 12px; background: var(--panel); border: 1px solid var(--line); padding: 6px 8px; margin-top: 8px; word-break: break-word; min-height: 1.6em; }
+  .stats { color: var(--muted); font-size: 12px; margin-top: 6px; }
 </style>
 </head>
 <body>
-<main>
-  <nav><strong>Solver</strong> · <a href="orders.html">Pin Order Finder</a><span class="spacer"></span><span class="msg" id="shareMsg"></span><button id="share" title="Copy a link to this scramble, clock state, and pin order">Copy link</button><button class="theme" id="theme" role="switch" aria-label="Dark theme"><span class="sun">☀</span><span class="moon">☾</span><span class="knob"></span></button></nav>
-  <h1>7sith | 7-Simul Wizard</h1>
+<main class="desktop">
+  <h1 class="desk-title"><img class="ico" src="favicon.png" alt="">7sith | 7-Simul Wizard</h1>
   <p class="lede">Get a scramble or set the clock faces, pick your seven pin states, and get the simultaneous moves that solve it.</p>
 
   <div class="grid two">
     <div class="col">
-    <section class="card scramble-card">
-      <h2>Scramble</h2>
-      <label for="scramble">WCA notation, e.g. <code>UR2+ DR3- … y2 U5+ …</code></label>
-      <textarea id="scramble" spellcheck="false" placeholder="UR3- DR4- DL3+ UL6+ U1+ R1- D5+ L2- ALL6+ y2 U3- R1- D1- L3- ALL5-"></textarea>
-      <div class="row">
-        <button class="primary" id="apply">Apply scramble</button>
-        <button id="random">Random scramble</button>
-        <button id="reset">Reset to solved</button>
+      <div class="window scramble-card" data-win="Scramble">
+        <div class="title-bar"><div class="title-bar-text"><img class="ico" src="favicon.png" alt="">Scramble</div><div class="title-bar-controls"><button aria-label="Minimize" title="Minimize"></button><button aria-label="Maximize" title="Maximize"></button><button aria-label="Close" title="Close"></button></div></div>
+        <div class="window-body">
+          <div class="field-row-stacked">
+            <label for="scramble">WCA notation, e.g. <code>UR2+ DR3- … y2 U5+ …</code></label>
+            <textarea id="scramble" rows="2" spellcheck="false" placeholder="UR3- DR4- DL3+ UL6+ U1+ R1- D5+ L2- ALL6+ y2 U3- R1- D1- L3- ALL5-"></textarea>
+          </div>
+          <div class="row">
+            <button class="btn-default" id="apply">Apply scramble</button>
+            <button id="random">Random scramble</button>
+            <button id="reset">Reset to solved</button>
+            <button id="share" title="Copy a link to this scramble, clock state, and pin order">Copy link</button>
+            <span class="msg" id="shareMsg"></span>
+          </div>
+        </div>
+        <div class="status-bar"><p class="status-bar-field msg" data-keep="status-bar-field" id="scrambleMsg"></p></div>
       </div>
-      <div class="msg" id="scrambleMsg"></div>
-    </section>
-  <section class="card pin-card">
-    <h2>Pin order</h2>
-    <div class="pins" id="pins"></div>
-    <div class="row presets">
-      <span style="color:var(--muted);font-size:0.9rem">Presets:</span>
-      <button data-order="dl R DR BS UL L ur">Tommy</button>
-      <button data-order="dl R DR ur L UL BS">bpaul</button>
-      <button data-order="ul R UR dr L DL FS">Poto</button>
-      <button data-order="UR R ul FS DL L dr">MDv2</button>
-      <button data-order="DL R L ul BS dr UR">7sh1</button>
-    </div>
-    <div class="msg" id="orderMsg"></div>
-  </section>
+
+      <div class="window pin-card" data-win="Pin order">
+        <div class="title-bar"><div class="title-bar-text"><img class="ico" src="favicon.png" alt="">Pin order</div><div class="title-bar-controls"><button aria-label="Minimize" title="Minimize"></button><button aria-label="Maximize" title="Maximize"></button><button aria-label="Close" title="Close"></button></div></div>
+        <div class="window-body">
+          <div class="pins" id="pins"></div>
+          <fieldset style="margin-top:10px">
+            <legend>Presets</legend>
+            <div class="row presets">
+              <button data-order="dl R DR BS UL L ur">Tommy</button>
+              <button data-order="dl R DR ur L UL BS">bpaul</button>
+              <button data-order="ul R UR dr L DL FS">Poto</button>
+              <button data-order="UR R ul FS DL L dr">MDv2</button>
+              <button data-order="DL R L ul BS dr UR">7sh1</button>
+            </div>
+          </fieldset>
+        </div>
+        <div class="status-bar"><p class="status-bar-field msg" data-keep="status-bar-field" id="orderMsg"></p></div>
+      </div>
     </div>
 
-    <section class="card faces-card">
-      <h2 style="text-align: center;">Clock state</h2>
-      <div class="faces">
-        <div class="face">
-          <div class="title">Front</div>
-          <div class="clockgrid" id="front"></div>
-        </div>
-        <div class="face">
-          <div class="title">Back (y2, 12 top)</div>
-          <div class="clockgrid" id="back"></div>
+    <div class="window faces-card" data-win="Clock state">
+      <div class="title-bar"><div class="title-bar-text"><img class="ico" src="favicon.png" alt="">Clock state</div><div class="title-bar-controls"><button aria-label="Minimize" title="Minimize"></button><button aria-label="Maximize" title="Maximize"></button><button aria-label="Close" title="Close"></button></div></div>
+      <div class="window-body">
+        <div class="faces">
+          <div class="face">
+            <div class="title">Front</div>
+            <div class="clockgrid" id="front"></div>
+          </div>
+          <div class="face">
+            <div class="title">Back (y2, 12 top)</div>
+            <div class="clockgrid" id="back"></div>
+          </div>
         </div>
       </div>
-      <div class="msg" id="stateMsg">Tap or drag a dial to set its hand; arrow keys and digits work too. Dashed back corners are geared to the front ones.</div>
-    </section>
+      <div class="status-bar"><p class="status-bar-field" id="stateMsg">Tap or drag a dial to set its hand; arrow keys and digits work too. Dashed back corners are geared to the front ones.</p></div>
+    </div>
   </div>
 
-  <hr />
+  <div class="window solution-card" data-win="Solution">
+    <div class="title-bar"><div class="title-bar-text"><img class="ico" src="favicon.png" alt="">Solution</div><div class="title-bar-controls"><button aria-label="Minimize" title="Minimize"></button><button aria-label="Maximize" title="Maximize"></button><button aria-label="Close" title="Close"></button></div></div>
+    <div class="window-body">
+      <div class="list steps" id="steps"></div>
+      <div class="summary" id="summary"></div>
+      <div class="stats" id="stats"></div>
+      <details>
+        <summary>How to read this</summary>
+        <p><strong>Pins</strong>: filled dot = pin up, seen from the front (UL UR / DL DR).</p>
+        <p><strong>Front move</strong>: turn any wheel whose pin is <em>up</em>. <strong>Back move</strong>: turn any wheel whose pin is <em>down</em>. Do both without changing pins.</p>
+        <p>All turns are hours as seen from the front: <code>3+</code> is three hours clockwise, <code>2-</code> two hours anticlockwise.</p>
+        <p>The small formula under each turn is what you would memorize to compute it from the scrambled faces (sum the listed clocks, then reduce to −5…6). Turns tagged <em>intuitive</em> are done by eye: the text under them says which clocks to line up with which (e.g. <code>align C to U/L</code> means turn until C shows the same hour as U and L; a <em>block</em> is a group of clocks that already agree). The last pin state always just aligns everything to 12.</p>
+      </details>
+    </div>
+    <div class="status-bar"><p class="status-bar-field msg" data-keep="status-bar-field" id="checkMsg"></p></div>
+  </div>
 
-  <section class="card" style="margin-top:16px">
-    <h2>Solution</h2>
-    <div class="steps" id="steps"></div>
-    <div class="summary" id="summary"></div>
-    <div class="stats" id="stats"></div>
-    <div class="msg" id="checkMsg"></div>
-    <details>
-      <summary>How to read this</summary>
-      <p><strong>Pins</strong>: filled dot = pin up, seen from the front (UL UR / DL DR).</p>
-      <p><strong>Front wheel</strong>: turn any wheel whose pin is <em>up</em>. <strong>Back wheel</strong>: turn any wheel whose pin is <em>down</em>. Do both without changing pins.</p>
-      <p>All turns are hours as seen from the front: <code>3+</code> is three hours clockwise, <code>2-</code> two hours anticlockwise.</p>
-      <p>The small formula under each turn is what you would memorize to compute it from the scrambled faces (sum the listed clocks, then reduce to −5…6). Turns tagged <em>intuitive</em> are done by eye: the text under them says which clocks to line up with which (e.g. <code>align C to U/L</code> means turn until C shows the same hour as U and L; a <em>block</em> is a group of clocks that already agree). The last pin state always just aligns everything to 12.</p>
-    </details>
-  </section>
-
-  <footer>By Chris Nankervis and Bruno Couto. Runs entirely locally.</footer>
+  <p class="desk-footer">By Chris Nankervis and Bruno Couto. Runs entirely locally.</p>
 </main>
 
+<div class="taskbar">
+  <button class="start" id="start" type="button" aria-haspopup="true" aria-expanded="false"><span class="flag"><i></i><i></i><i></i><i></i></span>start</button>
+  <div class="tasks" id="tasks">
+    <a class="taskbtn active" href="index.html"><img class="ico" src="favicon.png" alt=""><span class="label">7-Simul Wizard</span></a>
+    <a class="taskbtn" href="orders.html"><span class="glyph">🔍</span><span class="label">Pin Order Finder</span></a>
+  </div>
+  <div class="tray">
+    <button class="theme" id="theme" type="button" role="switch" aria-label="Dark theme"><span class="sun">☀</span><span class="moon">☾</span><span class="knob"></span></button>
+    <span class="clock" id="clock">--:--</span>
+  </div>
+</div>
+<div class="startmenu" id="startmenu" hidden>
+  <div class="head"><img class="ico" src="favicon.png" alt="">7sith</div>
+  <ul>
+    <li><a href="index.html"><img class="ico" src="favicon.png" alt=""><span>7-Simul Wizard<span class="sub">Solve a scramble with your pin order</span></span></a></li>
+    <li><a href="orders.html"><span class="glyph">🔍</span><span>Pin Order Finder<span class="sub">Search all 1,370,880 pin orders</span></span></a></li>
+    <li class="sep"></li>
+    <li><a href="https://github.com/chrnan6710/7sithrmarkdown" target="_blank" rel="noopener"><span class="glyph">📄</span><span>ClockClean.Rmd on GitHub<span class="sub">The notebook behind the maths</span></span></a></li>
+    <li><button type="button" data-open-about><span class="glyph">💿</span><span>About 7sith</span></button></li>
+  </ul>
+  <div class="foot">Runs entirely in your browser; nothing is sent anywhere.</div>
+</div>
+<div class="window about" id="about" hidden>
+  <div class="title-bar"><div class="title-bar-text"><img class="ico" src="favicon.png" alt="">About 7sith</div><div class="title-bar-controls"><button aria-label="Close" title="Close"></button></div></div>
+  <div class="window-body">
+    <img src="favicon.png" alt="">
+    <div>
+      <p><strong>7sith | 7-Simul Wizard</strong></p>
+      <p>By Chris Nankervis and Bruno Couto. Linear-algebra method from <code>ClockClean.Rmd</code>.</p>
+      <p>Theme: Windows XP, courtesy of <a href="https://github.com/botoxparty/XP.css" target="_blank" rel="noopener">XP.css</a> (MIT).</p>
+      <div class="row"><button type="button" class="btn-default" data-close-about>OK</button></div>
+    </div>
+  </div>
+</div>
+
 <script src="clock.js"></script>
+<script src="xp-desktop.js"></script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -275,7 +273,7 @@
   function getOrder() { return selects.map((s) => s.value); }
   function setOrder(order) { order.forEach((p, i) => { selects[i].value = p; }); saveOrder(); }
   function saveOrder() { try { localStorage.setItem("clock7.order", getOrder().join(" ")); } catch (e) {} }
-  function setMsg(id, text, cls) { const el = $(id); el.textContent = text; el.className = "msg" + (cls ? " " + cls : ""); }
+  function setMsg(id, text, cls) { const el = $(id); el.textContent = text; el.className = "msg" + (cls ? " " + cls : "") + (el.dataset.keep ? " " + el.dataset.keep : ""); }
 
   function pinDiagram(pinsUp) {
     const d = document.createElement("div"); d.className = "pindiag"; d.title = "Pins up (UL UR / DL DR)";
