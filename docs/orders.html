@@ -374,7 +374,7 @@
         else if (x2) {
           const f = a.formulasX2[col];
           d.appendChild(document.createTextNode(f.text + " (" + a.memoLength[col] + ")"));
-          if (!f.exact) { const w = document.createElement("span"); w.className = "warn"; w.title = "Thirds cannot be read upside down: read the back dials by their printed numbers."; w.textContent = " read printed 12"; d.appendChild(w); }
+          if (!f.exact) { const w = document.createElement("span"); w.className = "warn"; w.style.cursor = "help"; w.title = "Determinant ±3 set: in x2 mode read the back dials by their printed numbers (12 at the bottom), because formulas with thirds cannot be read upside down."; w.textContent = "†"; d.appendChild(w); }
         }
         else d.appendChild(document.createTextNode(a.formulas[col] + " (" + a.memoLength[col] + ")"));
         grid.appendChild(d);

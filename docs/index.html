@@ -108,7 +108,7 @@
   .step .num.zero { color: var(--muted); font-weight: 400; }
   .step .num.impossible { color: var(--bad); }
   .tag.bad { background: var(--exclude, #f8e5e3); color: var(--bad); }
-  .tag.warn { background: #fff3d6; color: var(--warn); }
+  .formula .dagger { color: var(--warn); cursor: help; margin-left: 2px; }
   .formula .memo { opacity: 0.75; }
   .turn .what { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
   .turn .formula { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); word-break: break-word; }
@@ -228,6 +228,7 @@
   let endFront = false;
   // x2 mode: the back is viewed after turning the clock over the horizontal axis (upside down); shared with the finder
   let x2 = false;
+  const X2_THIRDS_NOTE = "In x2 mode, read this set's back dials by their printed numbers (12 at the bottom): formulas with thirds (†) cannot be read upside down.";
   const dials = [];
   const NS = "http://www.w3.org/2000/svg";
   const idx = (name) => Clock.CLOCKS.indexOf(name);
@@ -327,11 +328,13 @@
     if (intuitive) what.appendChild(tag("", "intuitive"));
     const impossible = Clock.isFraction(amount);
     if (impossible) what.appendChild(tag("bad", "impossible"));
-    if (x2 && !st[side + "X2Exact"]) what.appendChild(tag("warn", "read printed 12", "This formula has thirds in it, so it cannot be read upside down: read the back dials by their printed numbers (the 12 is at the bottom)."));
     const num = document.createElement("div"); num.className = "num" + (amount === 0 ? " zero" : impossible ? " impossible" : ""); num.textContent = Clock.formatTurn(amount);
     const f = document.createElement("div"); f.className = "formula";
     if (!intuitive) f.textContent = formula;
     else { f.textContent = align; if (i < 6) { const m = document.createElement("span"); m.className = "memo"; m.textContent = " (" + formula + ")"; f.appendChild(m); } }
+    if (x2 && !st[side + "X2Exact"] && (!intuitive || i < 6)) { // thirds: see the note under the pin order
+      const d = document.createElement("span"); d.className = "dagger"; d.textContent = "†"; d.title = X2_THIRDS_NOTE; f.appendChild(d);
+    }
     t.append(what, num, f); return t;
   }
 
@@ -363,7 +366,9 @@
     const steps = $("steps"); steps.innerHTML = ""; $("summary").textContent = ""; $("stats").textContent = ""; setMsg("checkMsg", "");
     const v = Clock.validateOrder(order);
     if (v.errors.length) { setMsg("orderMsg", v.errors.join(" "), "bad"); return; }
-    setMsg("orderMsg", v.warnings.length ? v.warnings.join(" ") : "Valid 7-simul order: solves every scramble.", v.warnings.length ? "warn" : "ok");
+    const warnings = v.warnings.slice();
+    if (x2 && warnings.length) warnings.push(X2_THIRDS_NOTE);
+    setMsg("orderMsg", warnings.length ? warnings.join(" ") : "Valid 7-simul order: solves every scramble.", warnings.length ? "warn" : "ok");
 
     const sol = Clock.solve(order, state);
     if (!sol.ok) { setMsg("checkMsg", sol.reason, "bad"); return; }
